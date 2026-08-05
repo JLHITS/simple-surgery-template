@@ -1,69 +1,54 @@
 import Link from 'next/link'
-import { Footer } from '@/components/Footer'
-import { Header } from '@/components/Header'
-import { ActionCard, CardGrid, PageHeader } from '@/components/ui'
-import { getSiteConfig } from '@/lib/config'
+import { NhsLogo } from '@/components/NhsLogo'
 
 /**
- * The global 404, for URLs that match no route at all.
+ * The global 404, for URLs that match no practice at all.
  *
- * Renders the site chrome itself because it sits above the (site) route group,
- * so a patient who mistypes a URL still gets the menu and the phone number
- * rather than a bare error page.
+ * There is no tenant here by definition, so there is no practice name, no
+ * phone number and no branding to show. Anyone who reaches this typed a
+ * practice code that does not exist, so the useful thing is to point them at
+ * the NHS service that will find their real surgery.
  */
-export default async function NotFound() {
-  const config = await getSiteConfig()
-  const { practice, advanced } = config
-
+export default function NotFound() {
   return (
-    <>
-      <Header
-        practiceName={practice.name}
-        logoUrl={practice.logoUrl}
-        logoAlt={practice.logoAlt}
-        phone={practice.phone}
-        showSearch={advanced.showSearch}
-        showNhsLogo={advanced.showNhsLogo}
-      />
+    <main className="flex min-h-screen items-center justify-center px-5 py-16">
+      <div className="w-full max-w-lg">
+        <NhsLogo height={26} />
 
-      <main id="main-content">
-        <PageHeader
-          title="Page not found"
-          intro="Sorry, we cannot find that page. It may have been moved or removed."
-        />
+        <h1 className="mt-8 text-3xl">Page not found</h1>
+        <p className="mt-4 text-lg leading-relaxed text-nhs-grey-1">
+          We cannot find a practice website at that address. It may have moved, or the address
+          may have been typed incorrectly.
+        </p>
 
-        <div className="ss-container py-10">
-          <h2 className="sr-only">Common pages</h2>
-          <CardGrid columns={3}>
-            <ActionCard
-              href="/appointments"
-              title="Appointments"
-              description="Request an urgent or routine appointment."
-              icon="calendar"
-            />
-            <ActionCard
-              href="/prescriptions"
-              title="Prescriptions"
-              description="Order your repeat medicines."
-              icon="pill"
-            />
-            <ActionCard
-              href="/contact"
-              title="Contact us"
-              description="Phone number, address and opening hours."
-              icon="pin"
-            />
-          </CardGrid>
-
-          <p className="mt-8">
-            <Link href="/" className="ss-link">
-              Go to the home page
-            </Link>
+        <div className="mt-8 border-l-8 border-[color:var(--accent)] bg-nhs-grey-5 p-5">
+          <h2 className="text-lg font-bold">Looking for your GP surgery?</h2>
+          <p className="mt-2 text-[0.98rem] leading-relaxed">
+            Find it on the NHS website, which lists every GP practice in England.
+          </p>
+          <p className="mt-3">
+            <a
+              href="https://www.nhs.uk/service-search/find-a-gp"
+              className="ss-link font-semibold"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Find a GP on nhs.uk
+            </a>
           </p>
         </div>
-      </main>
 
-      <Footer config={config} />
-    </>
+        <p className="mt-8 text-[0.9rem] text-nhs-grey-1">
+          If you need medical help now, call <strong>111</strong>. For a life threatening
+          emergency, call <strong>999</strong>.
+        </p>
+
+        <p className="mt-6 text-[0.9rem]">
+          <Link href="/" className="ss-link">
+            Back to the start
+          </Link>
+        </p>
+      </div>
+    </main>
   )
 }

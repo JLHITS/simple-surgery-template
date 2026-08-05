@@ -12,7 +12,7 @@ import { NhsLogo } from './NhsLogo'
  * at least once a year, and showing the date makes that visible to patients,
  * inspectors and the practice itself.
  */
-export function Footer({ config }: { config: SiteConfig }) {
+export function Footer({ config, base }: { config: SiteConfig; base: string }) {
   const { practice, pages, compliance, advanced } = config
   const footerPages = [...pages]
     .filter((p) => p.showInFooter)
@@ -59,27 +59,27 @@ export function Footer({ config }: { config: SiteConfig }) {
             <h2 className="text-base font-bold">Patients</h2>
             <ul className="mt-3 grid gap-2 text-[0.95rem]">
               <li>
-                <Link href="/appointments" className="ss-link">
+                <Link href={`${base}/appointments`} className="ss-link">
                   Appointments
                 </Link>
               </li>
               <li>
-                <Link href="/prescriptions" className="ss-link">
+                <Link href={`${base}/prescriptions`} className="ss-link">
                   Prescriptions
                 </Link>
               </li>
               <li>
-                <Link href="/services/register" className="ss-link">
+                <Link href={`${base}/services/register`} className="ss-link">
                   Register with the surgery
                 </Link>
               </li>
               <li>
-                <Link href="/services/test-results" className="ss-link">
+                <Link href={`${base}/services/test-results`} className="ss-link">
                   Test results
                 </Link>
               </li>
               <li>
-                <Link href="/news" className="ss-link">
+                <Link href={`${base}/news`} className="ss-link">
                   News
                 </Link>
               </li>
@@ -91,7 +91,7 @@ export function Footer({ config }: { config: SiteConfig }) {
             <ul className="mt-3 grid gap-2 text-[0.95rem]">
               {footerPages.map((page) => (
                 <li key={page.slug}>
-                  <Link href={`/about/${page.slug}`} className="ss-link">
+                  <Link href={`${base}/about/${page.slug}`} className="ss-link">
                     {page.title}
                   </Link>
                 </li>

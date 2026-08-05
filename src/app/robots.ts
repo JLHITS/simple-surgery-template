@@ -1,18 +1,19 @@
 import type { MetadataRoute } from 'next'
-import { getSiteConfig } from '@/lib/config'
 
-export default async function robots(): Promise<MetadataRoute.Robots> {
-  const { advanced } = await getSiteConfig()
-  const base = (advanced.siteUrl || '').replace(/\/+$/, '')
-
+/**
+ * Platform-level robots.
+ *
+ * Practices on their own domain get this same file through the proxy, which is
+ * correct: the rules are identical for every site. The admin area and the API
+ * are behind a password, but there is no reason for them to appear in search
+ * results either.
+ */
+export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: '*',
       allow: '/',
-      // The admin area is behind a password, but there is no reason for it to
-      // appear in search results either.
-      disallow: ['/admin', '/api/', '/search'],
+      disallow: ['/api/', '/admin', '/*/admin', '/search', '/*/search'],
     },
-    ...(base ? { sitemap: `${base}/sitemap.xml`, host: base } : {}),
   }
 }

@@ -1,33 +1,50 @@
 /**
- * Every storage backend implements this. Two methods, one blob of JSON.
+ * Every storage backend implements this. Two methods, keyed by string.
  *
- * The whole site is a single document, so there is nothing to model, no schema
- * to migrate in the database, and no query language to learn. Swapping backend
- * is a one line env var change.
+ * Keys are namespaced per practice, so one database holds every site we host
+ * and provisioning a new practice is a write rather than a deployment.
  */
 export interface StorageDriver {
   /** Human readable name, shown in the admin panel diagnostics. */
   readonly name: string
-  /** Returns the raw JSON string, or null when nothing has been saved yet. */
-  read(): Promise<string | null>
+  /** Returns the raw JSON string, or null when nothing is stored at that key. */
+  read(key: string): Promise<string | null>
   /** Persists the raw JSON string. Must be atomic from the caller's point of view. */
-  write(json: string): Promise<void>
+  write(key: string, json: string): Promise<void>
   /** True when the driver has everything it needs to work. */
   isConfigured(): boolean
 }
 
 export type StorageDriverName = 'file' | 'upstash' | 'firebase' | 'memory'
 
-/**
- * The key this deployment reads and writes.
- *
- * Namespaced by SITE_KEY so one Upstash database can hold many practices, each
- * in its own key. That matters if you run several practice sites: a shared
- * database on the free tier is far simpler than one account per customer, and a
- * practice site is a single small document read from cache.
- *
- * Leave SITE_KEY unset for a single practice.
- */
-const SITE_KEY = (process.env.SITE_KEY || 'default').replace(/[^a-zA-Z0-9_-]/g, '') || 'default'
+const PREFIX = 'simplesurgery'
 
-export const STORAGE_KEY = `simplesurgery:${SITE_KEY}:site-config`
+/**
+ * Slugs end up in URLs, storage keys and filenames, so they are normalised hard:
+ * lowercase, alphanumeric and hyphens only, and never empty.
+ */
+export function normaliseSlug(value: string): string {
+  return (value || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 60)
+}
+
+/** The site content for one practice. */
+export function configKey(slug: string): string {
+  return `${PREFIX}:${normaliseSlug(slug)}:site-config`
+}
+
+/** The tenant record: status, billing, admin password hash. */
+export function tenantKey(slug: string): string {
+  return `${PREFIX}:tenant:${normaliseSlug(slug)}`
+}
+
+/** Maps a custom domain to the slug that owns it. */
+export function domainKey(hostname: string): string {
+  const clean = (hostname || '').toLowerCase().trim().replace(/:\d+$/, '')
+  return `${PREFIX}:domain:${clean}`
+}

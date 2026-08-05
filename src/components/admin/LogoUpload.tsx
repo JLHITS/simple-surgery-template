@@ -32,11 +32,13 @@ const MAX_INLINE_BYTES = 400_000
  *      which is what makes a fresh clone work out of the box.
  */
 export function LogoUpload({
+  site,
   value,
   onChange,
   label = 'Practice logo',
   hint,
 }: {
+  site: string
   value: string
   onChange: (url: string) => void
   label?: string
@@ -57,7 +59,7 @@ export function LogoUpload({
     const form = new FormData()
     form.append('file', file)
 
-    const res = await fetch('/api/admin/upload', { method: 'POST', body: form })
+    const res = await fetch(`/api/${site}/admin/upload`, { method: 'POST', body: form })
 
     // 501 means Cloudinary is not set up on this deployment.
     if (res.status === 501) return null

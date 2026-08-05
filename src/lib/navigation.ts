@@ -10,22 +10,26 @@
  * looking for an appointment have to read past.
  */
 export interface NavItem {
-  href: string
+  /** Root-relative, without the practice prefix. */
+  path: string
   label: string
-  /** Used to decide the active state for nested routes. */
-  match: string
 }
 
 export const MAIN_NAV: NavItem[] = [
-  { href: '/', label: 'Home', match: '/' },
-  { href: '/appointments', label: 'Appointments', match: '/appointments' },
-  { href: '/prescriptions', label: 'Prescriptions', match: '/prescriptions' },
-  { href: '/services', label: 'Services', match: '/services' },
-  { href: '/about', label: 'About the surgery', match: '/about' },
-  { href: '/contact', label: 'Contact us', match: '/contact' },
+  { path: '/', label: 'Home' },
+  { path: '/appointments', label: 'Appointments' },
+  { path: '/prescriptions', label: 'Prescriptions' },
+  { path: '/services', label: 'Services' },
+  { path: '/about', label: 'About the surgery' },
+  { path: '/contact', label: 'Contact us' },
 ]
 
-export function isActive(pathname: string, item: NavItem): boolean {
-  if (item.match === '/') return pathname === '/'
-  return pathname === item.match || pathname.startsWith(`${item.match}/`)
+/**
+ * Whether a nav item is the current page.
+ * `base` is the practice prefix, or the empty string in single tenant mode.
+ */
+export function isActive(pathname: string, base: string, item: NavItem): boolean {
+  const target = item.path === '/' ? base || '/' : `${base}${item.path}`
+  if (item.path === '/') return pathname === target || pathname === `${target}/`
+  return pathname === target || pathname.startsWith(`${target}/`)
 }

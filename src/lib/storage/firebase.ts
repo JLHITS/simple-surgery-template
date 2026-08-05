@@ -1,6 +1,5 @@
 import { createSign } from 'node:crypto'
 import type { StorageDriver } from './types'
-import { STORAGE_KEY } from './types'
 
 /**
  * Google Firestore over its REST API.
@@ -9,8 +8,8 @@ import { STORAGE_KEY } from './types'
  * Cloud. Talks to the REST endpoint directly and mints its own OAuth token from
  * a service account, so the heavyweight firebase-admin SDK is not needed.
  *
- * The entire config is stored as one string field on one document. Firestore's
- * 1MB document limit is comfortably more than a practice site needs.
+ * Each storage key becomes one document holding a single string field.
+ * Firestore's 1MB document limit is comfortably more than a practice site needs.
  *
  * Required env:
  *   FIREBASE_PROJECT_ID
@@ -23,7 +22,6 @@ const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || ''
 const CLIENT_EMAIL = process.env.FIREBASE_CLIENT_EMAIL || ''
 const PRIVATE_KEY = (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n')
 const COLLECTION = process.env.FIREBASE_COLLECTION || 'simplesurgery'
-const DOC_ID = STORAGE_KEY.replace(/[:/]/g, '_')
 
 const TOKEN_URL = 'https://oauth2.googleapis.com/token'
 const SCOPE = 'https://www.googleapis.com/auth/datastore'
@@ -57,8 +55,7 @@ async function getAccessToken(): Promise<string> {
   const signer = createSign('RSA-SHA256')
   signer.update(`${header}.${claims}`)
   signer.end()
-  const signature = base64url(signer.sign(PRIVATE_KEY))
-  const assertion = `${header}.${claims}.${signature}`
+  const assertion = `${header}.${claims}.${base64url(signer.sign(PRIVATE_KEY))}`
 
   const res = await fetch(TOKEN_URL, {
     method: 'POST',
@@ -79,8 +76,9 @@ async function getAccessToken(): Promise<string> {
   return body.access_token
 }
 
-function docUrl() {
-  return `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/${COLLECTION}/${DOC_ID}`
+function docUrl(key: string) {
+  const docId = key.replace(/[^a-zA-Z0-9_-]/g, '_')
+  return `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/${COLLECTION}/${docId}`
 }
 
 export const firebaseDriver: StorageDriver = {
@@ -90,11 +88,11 @@ export const firebaseDriver: StorageDriver = {
     return Boolean(PROJECT_ID && CLIENT_EMAIL && PRIVATE_KEY)
   },
 
-  async read() {
+  async read(key) {
     const token = await getAccessToken()
-    const res = await fetch(docUrl(), {
+    const res = await fetch(docUrl(key), {
       headers: { Authorization: `Bearer ${token}` },
-      next: { tags: ['site-config'], revalidate: 3600 },
+      next: { tags: [`store:${key}`], revalidate: 3600 },
     })
 
     if (res.status === 404) return null
@@ -102,16 +100,14 @@ export const firebaseDriver: StorageDriver = {
       throw new Error(`Firestore read failed: ${res.status} ${await res.text()}`)
     }
 
-    const body = (await res.json()) as {
-      fields?: { json?: { stringValue?: string } }
-    }
+    const body = (await res.json()) as { fields?: { json?: { stringValue?: string } } }
     return body.fields?.json?.stringValue ?? null
   },
 
-  async write(json) {
+  async write(key, json) {
     const token = await getAccessToken()
     // updateMask keeps the write to the single field we own.
-    const res = await fetch(`${docUrl()}?updateMask.fieldPaths=json`, {
+    const res = await fetch(`${docUrl(key)}?updateMask.fieldPaths=json`, {
       method: 'PATCH',
       headers: {
         Authorization: `Bearer ${token}`,

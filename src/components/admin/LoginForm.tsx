@@ -4,10 +4,12 @@ import { useState } from 'react'
 import { NhsLogo } from '@/components/NhsLogo'
 
 export function LoginForm({
+  site,
   practiceName,
   configured,
   showNhsLogo,
 }: {
+  site: string
   practiceName: string
   configured: boolean
   showNhsLogo: boolean
@@ -22,7 +24,7 @@ export function LoginForm({
     setError('')
 
     try {
-      const res = await fetch('/api/admin/login', {
+      const res = await fetch(`/api/${site}/admin/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password }),
@@ -31,7 +33,7 @@ export function LoginForm({
       if (res.ok) {
         // Full reload rather than a router refresh, so the server renders the
         // editor with the new session cookie already in place.
-        window.location.href = '/admin'
+        window.location.reload()
         return
       }
 

@@ -19,6 +19,8 @@ import {
 import { LogoUpload } from './LogoUpload'
 
 export interface SectionProps {
+  /** The practice slug, needed for the tenant-scoped upload endpoint. */
+  site: string
   config: SiteConfig
   update: (patch: Partial<SiteConfig>) => void
 }
@@ -34,7 +36,7 @@ const ICON_OPTIONS = ICON_NAMES.map((name) => ({ value: name, label: name }))
 
 /* --------------------------------------------------------------- practice */
 
-export function PracticeSection({ config, update }: SectionProps) {
+export function PracticeSection({ site, config, update }: SectionProps) {
   const { practice } = config
   const set = (patch: Partial<SiteConfig['practice']>) =>
     update({ practice: { ...practice, ...patch } })
@@ -55,6 +57,7 @@ export function PracticeSection({ config, update }: SectionProps) {
           onChange={(strapline) => set({ strapline })}
         />
         <LogoUpload
+          site={site}
           value={practice.logoUrl}
           onChange={(logoUrl) => set({ logoUrl })}
           hint="A transparent PNG or SVG works best. If you do not add one, your practice name appears as text instead."
@@ -828,7 +831,7 @@ export function PagesSection({ config, update }: SectionProps) {
 
 /* ------------------------------------------------------------------- team */
 
-export function TeamSection({ config, update }: SectionProps) {
+export function TeamSection({ site, config, update }: SectionProps) {
   return (
     <div className="grid gap-6">
       <p className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 text-[0.85rem] leading-relaxed text-zinc-600">
@@ -895,6 +898,7 @@ export function TeamSection({ config, update }: SectionProps) {
               onChange={(availability) => patch({ availability })}
             />
             <LogoUpload
+              site={site}
               label="Photo"
               value={item.photoUrl || ''}
               onChange={(photoUrl) => patch({ photoUrl })}

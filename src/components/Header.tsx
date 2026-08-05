@@ -14,6 +14,8 @@ interface HeaderProps {
   phone: string
   showSearch: boolean
   showNhsLogo: boolean
+  /** Practice URL prefix, or the empty string in single tenant mode. */
+  base: string
 }
 
 export function Header({
@@ -23,6 +25,7 @@ export function Header({
   phone,
   showSearch,
   showNhsLogo,
+  base,
 }: HeaderProps) {
   const pathname = usePathname()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -57,7 +60,7 @@ export function Header({
       <div className="ss-container">
         <div className="flex items-center justify-between gap-4 py-4">
           <Link
-            href="/"
+            href={base || '/'}
             className="flex min-w-0 items-center gap-3 no-underline sm:gap-4"
             aria-label={`${practiceName}, home page`}
           >
@@ -123,7 +126,7 @@ export function Header({
       {showSearch && searchOpen && (
         <div className="border-t border-nhs-grey-4 bg-nhs-grey-5">
           <div className="ss-container py-4">
-            <form action="/search" method="get" role="search" id="site-search">
+            <form action={`${base}/search`} method="get" role="search" id="site-search">
               <label htmlFor="q" className="mb-2 block text-sm font-bold">
                 Search this website
               </label>
@@ -157,11 +160,11 @@ export function Header({
         <div className="ss-container">
           <ul className="flex flex-col lg:flex-row lg:gap-1">
             {MAIN_NAV.map((item) => {
-              const active = isActive(pathname, item)
+              const active = isActive(pathname, base, item)
               return (
-                <li key={item.href} className="border-b border-nhs-grey-4 lg:border-b-0">
+                <li key={item.path} className="border-b border-nhs-grey-4 lg:border-b-0">
                   <Link
-                    href={item.href}
+                    href={item.path === '/' ? base || '/' : `${base}${item.path}`}
                     aria-current={active ? 'page' : undefined}
                     className={`flex min-h-12 items-center px-1 py-3 text-base font-semibold no-underline lg:px-4 ${
                       active

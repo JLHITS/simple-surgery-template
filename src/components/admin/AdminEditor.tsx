@@ -61,13 +61,24 @@ const SECTIONS: SectionDef[] = [
 
 const GROUPS = ['Everyday', 'Content', 'Practice information'] as const
 
+export interface BillingInfo {
+  status: 'active' | 'past_due' | 'suspended'
+  email: string
+  customDomain: string
+  mustChangePassword: boolean
+}
+
 interface Props {
+  /** The practice slug. Every admin request is scoped to it. */
+  site: string
   initialConfig: SiteConfig
   storage: { name: string; configured: boolean; persistent: boolean }
   siteUrl: string
+  /** Null for the demo and for self-hosted sites, which have no billing. */
+  billing: BillingInfo | null
 }
 
-export function AdminEditor({ initialConfig, storage, siteUrl }: Props) {
+export function AdminEditor({ site, initialConfig, storage, siteUrl, billing }: Props) {
   const [config, setConfig] = useState<SiteConfig>(initialConfig)
   const [saved, setSaved] = useState<string>(JSON.stringify(initialConfig))
   const [section, setSection] = useState<SectionKey>('notice')
@@ -99,7 +110,7 @@ export function AdminEditor({ initialConfig, storage, siteUrl }: Props) {
     setMessage('')
 
     try {
-      const res = await fetch('/api/admin/save', {
+      const res = await fetch(`/api/${site}/admin/save`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(config),
@@ -123,8 +134,8 @@ export function AdminEditor({ initialConfig, storage, siteUrl }: Props) {
   }
 
   async function signOut() {
-    await fetch('/api/admin/logout', { method: 'POST' })
-    window.location.href = '/admin'
+    await fetch(`/api/${site}/admin/logout`, { method: 'POST' })
+    window.location.reload()
   }
 
   const current = SECTIONS.find((s) => s.key === section) ?? SECTIONS[0]
@@ -214,18 +225,18 @@ export function AdminEditor({ initialConfig, storage, siteUrl }: Props) {
           </div>
 
           <div className="rounded-2xl border border-zinc-200 bg-white p-5 sm:p-7">
-            {section === 'practice' && <PracticeSection config={config} update={update} />}
-            {section === 'hours' && <HoursSection config={config} update={update} />}
-            {section === 'notice' && <NoticeSection config={config} update={update} />}
-            {section === 'online' && <OnlineSection config={config} update={update} />}
-            {section === 'content' && <ContentSection config={config} update={update} />}
-            {section === 'services' && <ServicesSection config={config} update={update} />}
-            {section === 'pages' && <PagesSection config={config} update={update} />}
-            {section === 'team' && <TeamSection config={config} update={update} />}
-            {section === 'news' && <NewsSection config={config} update={update} />}
-            {section === 'compliance' && <ComplianceSection config={config} update={update} />}
+            {section === 'practice' && <PracticeSection site={site} config={config} update={update} />}
+            {section === 'hours' && <HoursSection site={site} config={config} update={update} />}
+            {section === 'notice' && <NoticeSection site={site} config={config} update={update} />}
+            {section === 'online' && <OnlineSection site={site} config={config} update={update} />}
+            {section === 'content' && <ContentSection site={site} config={config} update={update} />}
+            {section === 'services' && <ServicesSection site={site} config={config} update={update} />}
+            {section === 'pages' && <PagesSection site={site} config={config} update={update} />}
+            {section === 'team' && <TeamSection site={site} config={config} update={update} />}
+            {section === 'news' && <NewsSection site={site} config={config} update={update} />}
+            {section === 'compliance' && <ComplianceSection site={site} config={config} update={update} />}
             {section === 'advanced' && (
-              <AdvancedSection config={config} update={update} storage={storage} />
+              <AdvancedSection site={site} config={config} update={update} storage={storage} />
             )}
           </div>
         </div>

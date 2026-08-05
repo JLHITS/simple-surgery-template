@@ -1,16 +1,12 @@
 import type { StorageDriver } from './types'
-import { STORAGE_KEY } from './types'
 
 /**
- * Upstash Redis over its REST API. This is the recommended backend for a
- * deployed practice site.
+ * Upstash Redis over its REST API. The recommended backend for anything
+ * deployed, and the one that makes multi-tenancy cheap: every practice we host
+ * lives in the same database under its own key.
  *
  * Deliberately uses plain fetch rather than the Upstash SDK: one less
  * dependency, works on any runtime, and the two calls we need are trivial.
- *
- * Set up on Vercel: Storage tab, add Upstash Redis, and the two env vars below
- * are injected automatically. Free tier is 500,000 commands a month, which is
- * far beyond what a practice site uses since reads are cached.
  */
 const URL_ENV = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL || ''
 const TOKEN_ENV = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN || ''
@@ -26,12 +22,12 @@ export const upstashDriver: StorageDriver = {
     return Boolean(URL_ENV && TOKEN_ENV)
   },
 
-  async read() {
-    const res = await fetch(endpoint(`get/${encodeURIComponent(STORAGE_KEY)}`), {
+  async read(key) {
+    const res = await fetch(endpoint(`get/${encodeURIComponent(key)}`), {
       headers: { Authorization: `Bearer ${TOKEN_ENV}` },
-      // Cached by tag so patient-facing pages do not hit Redis on every request.
-      // The admin save handler purges this tag, so edits appear immediately.
-      next: { tags: ['site-config'], revalidate: 3600 },
+      // Tagged per key so one practice saving a change cannot purge another
+      // practice's cache. The save handler revalidates its own tag only.
+      next: { tags: [`store:${key}`], revalidate: 3600 },
     })
 
     if (!res.ok) {
@@ -42,8 +38,8 @@ export const upstashDriver: StorageDriver = {
     return body.result ?? null
   },
 
-  async write(json) {
-    const res = await fetch(endpoint(`set/${encodeURIComponent(STORAGE_KEY)}`), {
+  async write(key, json) {
+    const res = await fetch(endpoint(`set/${encodeURIComponent(key)}`), {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${TOKEN_ENV}`,

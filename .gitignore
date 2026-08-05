@@ -1,0 +1,22 @@
+# This file exists so the template still behaves correctly when it is split out
+# into its own public repository. The monorepo root has its own .gitignore.
+
+node_modules/
+.next/
+out/
+build/
+.vercel/
+
+# Local env files
+.env
+.env*.local
+!.env.example
+
+# Content written by the local file storage driver
+data/site.json
+
+.DS_Store
+Thumbs.db
+*.log
+*.tsbuildinfo
+next-env.d.ts

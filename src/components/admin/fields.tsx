@@ -1,6 +1,6 @@
 'use client'
 
-import { useId, type ReactNode } from 'react'
+import { useId, useRef, useState, type ReactNode } from 'react'
 
 /**
  * Form primitives for the admin panel.
@@ -287,6 +287,105 @@ export function Fieldset({
 
 export function Divider() {
   return <hr className="my-8 border-0 border-t border-zinc-200" />
+}
+
+/**
+ * Tabbed panels.
+ *
+ * Used where a section holds several long text areas that are edited one at a
+ * time. Scrolling past a thousand words of appointments copy to reach the
+ * prescriptions box is the kind of small friction that makes staff avoid the
+ * admin panel, which is the whole problem this product exists to solve.
+ *
+ * Implements the ARIA tabs pattern: arrow keys move between tabs, Home and End
+ * jump to the ends, and only the selected tab is in the tab order.
+ */
+export interface TabDef {
+  key: string
+  label: string
+  content: ReactNode
+}
+
+export function Tabs({ tabs, ariaLabel }: { tabs: TabDef[]; ariaLabel: string }) {
+  const [active, setActive] = useState(tabs[0]?.key)
+  const baseId = useId()
+  const refs = useRef<Record<string, HTMLButtonElement | null>>({})
+
+  const index = tabs.findIndex((t) => t.key === active)
+
+  function focusTab(next: number) {
+    const clamped = (next + tabs.length) % tabs.length
+    const key = tabs[clamped].key
+    setActive(key)
+    refs.current[key]?.focus()
+  }
+
+  function onKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'ArrowRight') {
+      e.preventDefault()
+      focusTab(index + 1)
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault()
+      focusTab(index - 1)
+    } else if (e.key === 'Home') {
+      e.preventDefault()
+      focusTab(0)
+    } else if (e.key === 'End') {
+      e.preventDefault()
+      focusTab(tabs.length - 1)
+    }
+  }
+
+  return (
+    <div>
+      <div
+        role="tablist"
+        aria-label={ariaLabel}
+        onKeyDown={onKeyDown}
+        className="-mx-1 flex gap-1 overflow-x-auto border-b border-zinc-200 px-1"
+      >
+        {tabs.map((tab) => {
+          const selected = tab.key === active
+          return (
+            <button
+              key={tab.key}
+              ref={(el) => {
+                refs.current[tab.key] = el
+              }}
+              type="button"
+              role="tab"
+              id={`${baseId}-tab-${tab.key}`}
+              aria-selected={selected}
+              aria-controls={`${baseId}-panel-${tab.key}`}
+              tabIndex={selected ? 0 : -1}
+              onClick={() => setActive(tab.key)}
+              className={`-mb-px shrink-0 whitespace-nowrap border-b-2 px-3 py-2.5 text-[0.9rem] font-semibold transition ${
+                selected
+                  ? 'border-zinc-900 text-zinc-900'
+                  : 'border-transparent text-zinc-500 hover:border-zinc-300 hover:text-zinc-800'
+              }`}
+            >
+              {tab.label}
+            </button>
+          )
+        })}
+      </div>
+
+      {tabs.map((tab) => (
+        <div
+          key={tab.key}
+          role="tabpanel"
+          id={`${baseId}-panel-${tab.key}`}
+          aria-labelledby={`${baseId}-tab-${tab.key}`}
+          hidden={tab.key !== active}
+          tabIndex={0}
+          className="pt-7 focus-visible:outline-none"
+        >
+          {tab.key === active && tab.content}
+        </div>
+      ))}
+    </div>
+  )
 }
 
 export function SmallButton({

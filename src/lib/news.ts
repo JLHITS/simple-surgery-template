@@ -132,7 +132,7 @@ async function fetchOne(feedUrl: string): Promise<NewsItem[]> {
     const res = await fetch(feedUrl, {
       headers: {
         // Some NHS endpoints reject requests with no user agent.
-        'User-Agent': 'SimpleSurgery/1.0 (GP practice website; +https://simplesurgery.co.uk)',
+        'User-Agent': 'SimpleSurgery/1.0 (GP practice website; +https://simplesurgery.co)',
         Accept: 'application/rss+xml, application/atom+xml, application/xml, text/xml',
       },
       next: { revalidate: REVALIDATE_SECONDS, tags: ['nhs-news'] },

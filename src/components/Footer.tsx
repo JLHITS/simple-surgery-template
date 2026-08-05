@@ -187,7 +187,7 @@ export function Footer({ config }: { config: SiteConfig }) {
             <p>
               Built with{' '}
               <a
-                href="https://simplesurgery.co.uk"
+                href="https://simplesurgery.co"
                 className="ss-link"
                 target="_blank"
                 rel="noopener noreferrer"

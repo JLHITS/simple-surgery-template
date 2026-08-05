@@ -130,7 +130,18 @@ export default async function AboutPage() {
                           )}
                           <div className="min-w-0">
                             <p className="font-bold leading-snug">{member.name}</p>
-                            <p className="text-[0.9rem] text-nhs-grey-1">{member.role}</p>
+                            <p className="text-[0.9rem] text-nhs-grey-1">
+                              {member.role}
+                              {/* Patients often want to request a female or male
+                                  clinician, so it is shown alongside the role
+                                  rather than hidden in the biography. */}
+                              {member.gender && (
+                                <>
+                                  <span aria-hidden="true"> &middot; </span>
+                                  <span>{member.gender}</span>
+                                </>
+                              )}
+                            </p>
                           </div>
                         </div>
                         {member.bio && (

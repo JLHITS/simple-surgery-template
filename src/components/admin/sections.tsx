@@ -11,6 +11,7 @@ import {
   MarkdownArea,
   Select,
   SmallButton,
+  Tabs,
   TextArea,
   TextInput,
   Toggle,
@@ -173,62 +174,81 @@ export function HoursSection({ config, update }: SectionProps) {
     })
   }
 
+  const extended = hours.extendedAccess
+  const setExtended = (patch: Partial<SiteConfig['hours']['extendedAccess']>) =>
+    set({ extendedAccess: { ...extended, ...patch } })
+
+  const setExtendedDay = (day: string, patch: Record<string, unknown>) => {
+    setExtended({
+      days: extended.days.map((d) => (d.day === day ? { ...d, ...patch } : d)),
+    })
+  }
+
+  /** The same seven-row time editor, used for core and for extended access. */
+  const dayRows = (
+    source: typeof hours.days,
+    onChange: (day: string, patch: Record<string, unknown>) => void,
+    openLabel = 'Open',
+  ) => (
+    <div className="grid gap-2">
+      {WEEKDAYS.map((weekday) => {
+        const day = source.find((d) => d.day === weekday)
+        if (!day) return null
+
+        return (
+          <div
+            key={weekday}
+            className="flex flex-wrap items-center gap-3 rounded-lg border border-zinc-200 px-3 py-2.5"
+          >
+            <span className="w-24 shrink-0 text-sm font-semibold">
+              {WEEKDAY_LABELS[weekday]}
+            </span>
+
+            <label className="flex items-center gap-2 text-[0.85rem]">
+              <input
+                type="checkbox"
+                checked={!day.closed}
+                onChange={(e) => onChange(weekday, { closed: !e.target.checked })}
+                className="h-4 w-4 accent-zinc-900"
+              />
+              {openLabel}
+            </label>
+
+            {!day.closed && (
+              <>
+                <label className="flex items-center gap-1.5 text-[0.85rem]">
+                  <span className="text-zinc-500">from</span>
+                  <input
+                    type="time"
+                    value={day.open}
+                    onChange={(e) => onChange(weekday, { open: e.target.value })}
+                    className="min-h-10 rounded-lg border border-zinc-300 px-2 py-1 text-[0.85rem]"
+                  />
+                </label>
+                <label className="flex items-center gap-1.5 text-[0.85rem]">
+                  <span className="text-zinc-500">to</span>
+                  <input
+                    type="time"
+                    value={day.close}
+                    onChange={(e) => onChange(weekday, { close: e.target.value })}
+                    className="min-h-10 rounded-lg border border-zinc-300 px-2 py-1 text-[0.85rem]"
+                  />
+                </label>
+              </>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+
   return (
     <div className="grid gap-8">
       <Fieldset
         legend="Opening hours"
         description="Days with the same hours are grouped together automatically on the website."
       >
-        <div className="grid gap-2">
-          {WEEKDAYS.map((weekday) => {
-            const day = hours.days.find((d) => d.day === weekday)
-            if (!day) return null
-
-            return (
-              <div
-                key={weekday}
-                className="flex flex-wrap items-center gap-3 rounded-lg border border-zinc-200 px-3 py-2.5"
-              >
-                <span className="w-24 shrink-0 text-sm font-semibold">
-                  {WEEKDAY_LABELS[weekday]}
-                </span>
-
-                <label className="flex items-center gap-2 text-[0.85rem]">
-                  <input
-                    type="checkbox"
-                    checked={!day.closed}
-                    onChange={(e) => setDay(weekday, { closed: !e.target.checked })}
-                    className="h-4 w-4 accent-zinc-900"
-                  />
-                  Open
-                </label>
-
-                {!day.closed && (
-                  <>
-                    <label className="flex items-center gap-1.5 text-[0.85rem]">
-                      <span className="text-zinc-500">from</span>
-                      <input
-                        type="time"
-                        value={day.open}
-                        onChange={(e) => setDay(weekday, { open: e.target.value })}
-                        className="min-h-10 rounded-lg border border-zinc-300 px-2 py-1 text-[0.85rem]"
-                      />
-                    </label>
-                    <label className="flex items-center gap-1.5 text-[0.85rem]">
-                      <span className="text-zinc-500">to</span>
-                      <input
-                        type="time"
-                        value={day.close}
-                        onChange={(e) => setDay(weekday, { close: e.target.value })}
-                        className="min-h-10 rounded-lg border border-zinc-300 px-2 py-1 text-[0.85rem]"
-                      />
-                    </label>
-                  </>
-                )}
-              </div>
-            )
-          })}
-        </div>
+        {dayRows(hours.days, setDay)}
 
         <TextArea
           label="Note under the hours"
@@ -237,6 +257,52 @@ export function HoursSection({ config, update }: SectionProps) {
           onChange={(notes) => set({ notes })}
           rows={2}
         />
+      </Fieldset>
+
+      <Divider />
+
+      <Fieldset
+        legend="Extended access"
+        description="Evening and weekend appointments, often called enhanced access. Leave this switched off if your practice does not offer them."
+      >
+        <Toggle
+          label="We offer extended access appointments"
+          hint="These appear on your website in their own panel, clearly separated from your normal hours so nobody turns up to a locked door."
+          checked={extended.enabled}
+          onChange={(enabled) => setExtended({ enabled })}
+        />
+
+        {extended.enabled && (
+          <>
+            <TextInput
+              label="Heading"
+              value={extended.title}
+              onChange={(title) => setExtended({ title })}
+            />
+            <TextArea
+              label="Description"
+              hint="What these appointments are for, and what they are not for."
+              value={extended.description}
+              onChange={(description) => setExtended({ description })}
+              rows={2}
+            />
+
+            {dayRows(extended.days, setExtendedDay, 'Available')}
+
+            <TextInput
+              label="Where they are held"
+              hint="Leave blank if they are at your own surgery. Fill it in if they are at a hub, because patients will go to the wrong place otherwise."
+              value={extended.location}
+              onChange={(location) => setExtended({ location })}
+            />
+            <TextArea
+              label="How to book"
+              value={extended.bookingNote}
+              onChange={(bookingNote) => setExtended({ bookingNote })}
+              rows={2}
+            />
+          </>
+        )}
       </Fieldset>
 
       <Divider />
@@ -522,57 +588,91 @@ export function ContentSection({ config, update }: SectionProps) {
         the words here are safe to leave exactly as they are.
       </p>
 
-      <Fieldset legend="Appointments page">
-        <TextInput
-          label="Opening line"
-          value={content.appointmentsIntro}
-          onChange={(appointmentsIntro) => set({ appointmentsIntro })}
-        />
-        <MarkdownArea
-          label="Page content"
-          value={content.appointmentsBody}
-          onChange={(appointmentsBody) => set({ appointmentsBody })}
-          rows={16}
-        />
-      </Fieldset>
-
-      <Divider />
-
-      <Fieldset legend="Prescriptions page">
-        <TextInput
-          label="Opening line"
-          value={content.prescriptionsIntro}
-          onChange={(prescriptionsIntro) => set({ prescriptionsIntro })}
-        />
-        <MarkdownArea
-          label="Page content"
-          value={content.prescriptionsBody}
-          onChange={(prescriptionsBody) => set({ prescriptionsBody })}
-          rows={16}
-        />
-      </Fieldset>
-
-      <Divider />
-
-      <Fieldset legend="About and contact pages" columns={1}>
-        <TextInput
-          label="About page opening line"
-          value={content.aboutIntro}
-          onChange={(aboutIntro) => set({ aboutIntro })}
-        />
-        <MarkdownArea
-          label="Extra text on the About page"
-          hint="Optional. Leave blank if you have nothing to add."
-          value={content.aboutBody}
-          onChange={(aboutBody) => set({ aboutBody })}
-          rows={8}
-        />
-        <TextInput
-          label="Contact page opening line"
-          value={content.contactIntro}
-          onChange={(contactIntro) => set({ contactIntro })}
-        />
-      </Fieldset>
+      <Tabs
+        ariaLabel="Choose a page to edit"
+        tabs={[
+          {
+            key: 'appointments',
+            label: 'Appointments',
+            content: (
+              <Fieldset
+                legend="Appointments page"
+                description="The page patients visit most. NHS England calls it the most critical page on a GP website."
+              >
+                <TextInput
+                  label="Opening line"
+                  value={content.appointmentsIntro}
+                  onChange={(appointmentsIntro) => set({ appointmentsIntro })}
+                />
+                <MarkdownArea
+                  label="Page content"
+                  value={content.appointmentsBody}
+                  onChange={(appointmentsBody) => set({ appointmentsBody })}
+                  rows={18}
+                />
+              </Fieldset>
+            ),
+          },
+          {
+            key: 'prescriptions',
+            label: 'Prescriptions',
+            content: (
+              <Fieldset
+                legend="Prescriptions page"
+                description="The second most common reason patients come to a GP website."
+              >
+                <TextInput
+                  label="Opening line"
+                  value={content.prescriptionsIntro}
+                  onChange={(prescriptionsIntro) => set({ prescriptionsIntro })}
+                />
+                <MarkdownArea
+                  label="Page content"
+                  value={content.prescriptionsBody}
+                  onChange={(prescriptionsBody) => set({ prescriptionsBody })}
+                  rows={18}
+                />
+              </Fieldset>
+            ),
+          },
+          {
+            key: 'about',
+            label: 'About the surgery',
+            content: (
+              <Fieldset legend="About page">
+                <TextInput
+                  label="Opening line"
+                  value={content.aboutIntro}
+                  onChange={(aboutIntro) => set({ aboutIntro })}
+                />
+                <MarkdownArea
+                  label="Extra text on the About page"
+                  hint="Optional. Leave blank if you have nothing to add. Your team, CQC rating and policies appear automatically."
+                  value={content.aboutBody}
+                  onChange={(aboutBody) => set({ aboutBody })}
+                  rows={12}
+                />
+              </Fieldset>
+            ),
+          },
+          {
+            key: 'contact',
+            label: 'Contact us',
+            content: (
+              <Fieldset
+                legend="Contact page"
+                description="Your address, phone number and opening hours are pulled from Practice details and Opening hours, so there is only the opening line to write here."
+              >
+                <TextInput
+                  label="Opening line"
+                  value={content.contactIntro}
+                  onChange={(contactIntro) => set({ contactIntro })}
+                />
+              </Fieldset>
+            ),
+          },
+        ]}
+      />
     </div>
   )
 }
@@ -769,6 +869,18 @@ export function TeamSection({ config, update }: SectionProps) {
               hint="People with the same group name are shown together."
               value={item.group}
               onChange={(group) => patch({ group })}
+            />
+            <Select
+              label="Gender"
+              hint="Optional. Some patients want to ask for a female or male clinician. Showing it here saves them a phone call. Only add it with the person's agreement."
+              value={item.gender || ''}
+              options={[
+                { value: '', label: 'Do not show' },
+                { value: 'Female', label: 'Female' },
+                { value: 'Male', label: 'Male' },
+                { value: 'Non-binary', label: 'Non-binary' },
+              ]}
+              onChange={(gender) => patch({ gender })}
             />
             <TextArea
               label="About this person"

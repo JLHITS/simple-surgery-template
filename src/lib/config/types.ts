@@ -59,6 +59,15 @@ export interface TeamMember {
   photoUrl?: string
   /** Shown as "Dr Smith is available on Monday and Thursday". */
   availability?: string
+  /**
+   * Optional, and blank by default.
+   *
+   * Patients often want to ask for a female or male clinician, for an intimate
+   * examination or for cultural or religious reasons, and having it on the page
+   * saves them a phone call to ask. It is the practice's choice whether to
+   * publish it and each staff member's choice whether to be listed.
+   */
+  gender?: '' | 'Female' | 'Male' | 'Non-binary'
 }
 
 export interface ServiceItem {
@@ -145,6 +154,28 @@ export interface SiteConfig {
     outOfHoursInfo: string
     /** Hours during which reception can be reached, if different. */
     receptionNote: string
+
+    /**
+     * Enhanced access, still widely called extended access by patients.
+     *
+     * Since October 2022, PCNs have had to offer appointments outside core
+     * hours: weekday evenings and Saturdays. They are often delivered at a hub
+     * rather than at the practice, and sometimes by a different team, so they
+     * are modelled separately rather than being folded into the normal opening
+     * hours. Showing them as if they were core hours would send patients to a
+     * locked front door.
+     */
+    extendedAccess: {
+      enabled: boolean
+      /** Shown as the panel heading, e.g. "Evening and weekend appointments". */
+      title: string
+      description: string
+      /** Blank means the appointments are held at the practice itself. */
+      location: string
+      days: OpeningDay[]
+      /** How to book, e.g. "Call us or ask through the NHS App." */
+      bookingNote: string
+    }
   }
 
   urgent: {

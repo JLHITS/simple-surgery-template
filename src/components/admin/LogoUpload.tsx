@@ -14,16 +14,22 @@ const MAX_INLINE_BYTES = 400_000
 /**
  * Logo and photo upload.
  *
- * Two paths, and the practice never has to know which one it is on:
+ * Three paths, tried in order, and the practice never has to know which one it
+ * ended up on:
  *
- *   1. If Cloudinary is configured, the file goes straight from the browser to
- *      Cloudinary using an unsigned preset. No secret is involved, nothing
- *      passes through the server, and the image is served from a CDN with
- *      automatic WebP conversion.
+ *   1. Signed server upload. If CLOUDINARY_URL is set, the file goes to
+ *      /api/admin/upload, which signs it with the API secret server side. The
+ *      secret never reaches the browser and the endpoint is behind the admin
+ *      session. This is the one to prefer.
  *
- *   2. If it is not, the image is resized in the browser with a canvas and
- *      stored inline as a data URI. That keeps a fresh clone working with zero
- *      accounts and zero setup, which matters for the open source path.
+ *   2. Unsigned browser upload. If only the public cloud name and an unsigned
+ *      preset are set, the file goes straight to Cloudinary. Fine, but the
+ *      preset has to be published in the bundle, so anyone who finds it can
+ *      upload to your account.
+ *
+ *   3. Inline. The image is resized in the browser with a canvas and stored as
+ *      a data URI alongside the rest of the settings. No accounts, no setup,
+ *      which is what makes a fresh clone work out of the box.
  */
 export function LogoUpload({
   value,
@@ -39,10 +45,32 @@ export function LogoUpload({
   const inputRef = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [host, setHost] = useState<'unknown' | 'server' | 'browser' | 'inline'>(
+    CLOUD_NAME && UPLOAD_PRESET ? 'browser' : 'unknown',
+  )
 
-  const cloudinaryReady = Boolean(CLOUD_NAME && UPLOAD_PRESET)
+  /**
+   * Returns the hosted URL, or null when the server has no image hosting
+   * configured and the browser should handle it instead.
+   */
+  async function uploadViaServer(file: File): Promise<string | null> {
+    const form = new FormData()
+    form.append('file', file)
 
-  async function uploadToCloudinary(file: File): Promise<string> {
+    const res = await fetch('/api/admin/upload', { method: 'POST', body: form })
+
+    // 501 means Cloudinary is not set up on this deployment.
+    if (res.status === 501) return null
+
+    const body = (await res.json().catch(() => ({}))) as { url?: string; error?: string }
+    if (!res.ok || !body.url) {
+      throw new Error(body.error || 'The upload did not work.')
+    }
+
+    return body.url
+  }
+
+  async function uploadUnsigned(file: File): Promise<string> {
     const form = new FormData()
     form.append('file', file)
     form.append('upload_preset', UPLOAD_PRESET)
@@ -115,8 +143,22 @@ export function LogoUpload({
 
     setBusy(true)
     try {
-      const url = cloudinaryReady ? await uploadToCloudinary(file) : await resizeInline(file)
-      onChange(url)
+      // Signed server upload first, then an unsigned preset, then inline.
+      const hosted = await uploadViaServer(file)
+      if (hosted) {
+        setHost('server')
+        onChange(hosted)
+        return
+      }
+
+      if (CLOUD_NAME && UPLOAD_PRESET) {
+        setHost('browser')
+        onChange(await uploadUnsigned(file))
+        return
+      }
+
+      setHost('inline')
+      onChange(await resizeInline(file))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'That upload did not work.')
     } finally {
@@ -124,6 +166,13 @@ export function LogoUpload({
       if (inputRef.current) inputRef.current.value = ''
     }
   }
+
+  const hostLabel = {
+    unknown: 'Stored with your site settings',
+    server: 'Hosted on Cloudinary',
+    browser: 'Hosted on Cloudinary',
+    inline: 'Stored with your site settings',
+  }[host]
 
   return (
     <div className="grid gap-2">
@@ -157,11 +206,7 @@ export function LogoUpload({
               </SmallButton>
             )}
             <span className="text-[0.75rem] text-zinc-500">
-              {busy
-                ? 'Uploading...'
-                : cloudinaryReady
-                  ? 'Hosted on Cloudinary'
-                  : 'Stored with your site settings'}
+              {busy ? 'Uploading...' : hostLabel}
             </span>
           </div>
         </div>

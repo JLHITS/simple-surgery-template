@@ -230,6 +230,7 @@ function sanitiseTeam(value: unknown): TeamMember[] {
         bio: str(source.bio, '', LIMITS.medium),
         photoUrl: imageUrl(source.photoUrl),
         availability: str(source.availability),
+        gender: oneOf(source.gender, ['', 'Female', 'Male', 'Non-binary'] as const, ''),
       }
     })
     .filter((m): m is TeamMember => m !== null)
@@ -390,6 +391,17 @@ export function sanitiseConfig(input: unknown, fallback: SiteConfig): SiteConfig
       closures: sanitiseClosures(hours.closures),
       outOfHoursInfo: str(hours.outOfHoursInfo, fallback.hours.outOfHoursInfo, LIMITS.medium),
       receptionNote: str(hours.receptionNote, '', LIMITS.medium),
+      extendedAccess: (() => {
+        const extended = obj(hours.extendedAccess)
+        return {
+          enabled: bool(extended.enabled),
+          title: str(extended.title, fallback.hours.extendedAccess.title),
+          description: str(extended.description, '', LIMITS.medium),
+          location: str(extended.location),
+          days: sanitiseDays(extended.days, fallback.hours.extendedAccess.days),
+          bookingNote: str(extended.bookingNote, '', LIMITS.medium),
+        }
+      })(),
     },
 
     urgent: {

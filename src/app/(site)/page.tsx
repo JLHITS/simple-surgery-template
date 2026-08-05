@@ -186,6 +186,7 @@ export default async function HomePage() {
               days={hours.days}
               closures={hours.closures}
               notes={hours.notes}
+              extended={hours.extendedAccess}
               compact
             />
             <div className="mt-6">

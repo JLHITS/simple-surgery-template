@@ -184,7 +184,12 @@ export default async function ContactPage() {
             </div>
 
             <div className="mt-5">
-              <HoursTable days={hours.days} closures={hours.closures} notes={hours.notes} />
+              <HoursTable
+                days={hours.days}
+                closures={hours.closures}
+                notes={hours.notes}
+                extended={hours.extendedAccess}
+              />
             </div>
 
             {hours.receptionNote && (

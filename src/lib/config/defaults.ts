@@ -16,27 +16,30 @@ export const defaultConfig: SiteConfig = {
   updatedAt: '2026-01-01T00:00:00.000Z',
 
   practice: {
-    name: 'Fairfield Medical Centre',
-    strapline: 'NHS GP surgery in Fairfield',
-    odsCode: 'A81001',
+    name: 'Frogmorton Medical Centre',
+    strapline: 'NHS GP surgery in Frogmorton',
+    // Deliberately not a real ODS code. Real ones map to real practices.
+    odsCode: 'Z99999',
     logoUrl: '',
-    logoAlt: 'Fairfield Medical Centre',
-    addressLine1: '14 Hartley Road',
+    logoAlt: 'Frogmorton Medical Centre',
+    addressLine1: '14 Bywater Road',
     addressLine2: '',
-    town: 'Fairfield',
-    county: 'Greater Manchester',
-    postcode: 'M31 4AB',
-    phone: '0161 496 0100',
-    phoneSecondary: '0161 496 0101',
+    town: 'Frogmorton',
+    county: 'Eastfarthing',
+    postcode: 'SH1 4RE',
+    // 01632 960xxx is the range Ofcom reserves for use in fiction, so these
+    // numbers cannot ring a real person no matter who types them in.
+    phone: '01632 960 118',
+    phoneSecondary: '01632 960 119',
     phoneSecondaryLabel: 'Prescriptions line',
-    email: 'fairfield.reception@nhs.net',
+    email: 'reception@frogmorton.example',
     mapEmbedUrl: '',
     parkingInfo:
       'We have 12 patient parking spaces at the front of the building. Two of these are blue badge spaces beside the main door.',
     accessInfo:
       'The building is on one level. There are no steps at the entrance. We have an accessible toilet and a hearing loop at reception.',
     publicTransportInfo:
-      'The 23 and 245 buses stop on Hartley Road, two minutes walk away. Fairfield station is a 10 minute walk.',
+      'The surgery is on the East Road, opposite The Floating Log. The nearest bus stop is a two minute walk.',
   },
 
   hours: {
@@ -71,6 +74,25 @@ export const defaultConfig: SiteConfig = {
     outOfHoursInfo:
       'When we are closed, call NHS 111 free from any phone. They will tell you what to do and can arrange to see you if you need it.',
     receptionNote: 'Reception is open during surgery hours.',
+
+    extendedAccess: {
+      enabled: true,
+      title: 'Evening and weekend appointments',
+      description:
+        'You can book appointments outside our normal hours. These are for routine care that can be planned, not for urgent problems.',
+      location: 'Four Farthings Health Hub, Bywater',
+      days: [
+        { day: 'monday', closed: false, open: '18:30', close: '20:00' },
+        { day: 'tuesday', closed: true, open: '18:30', close: '20:00' },
+        { day: 'wednesday', closed: false, open: '18:30', close: '20:00' },
+        { day: 'thursday', closed: true, open: '18:30', close: '20:00' },
+        { day: 'friday', closed: true, open: '18:30', close: '20:00' },
+        { day: 'saturday', closed: false, open: '09:00', close: '13:00' },
+        { day: 'sunday', closed: true, open: '09:00', close: '13:00' },
+      ],
+      bookingNote:
+        'Book these in advance by calling us or asking through the NHS App. You cannot turn up without an appointment.',
+    },
   },
 
   urgent: {
@@ -132,6 +154,8 @@ You may be offered a face to face appointment, a phone call, a video call, or a 
 ## Seeing a particular doctor
 
 You can ask to see any doctor at the practice. Tell us when you get in touch. You may wait a little longer.
+
+You can also ask to see a female or a male doctor or nurse. Just tell us when you contact us. You do not need to give a reason.
 
 ## Home visits
 
@@ -205,56 +229,63 @@ Take unused or out of date medicines to any pharmacy. Do not put them in the bin
   team: [
     {
       id: 'tm-1',
-      name: 'Dr Amara Okonjo',
+      name: 'Dr Rosie Cotton',
+      gender: 'Female',
       role: 'GP Partner',
       group: 'Doctors',
-      bio: 'Dr Okonjo has worked at the practice since 2014. She has a special interest in diabetes and long term conditions.',
+      bio: 'Dr Cotton has worked at the practice since 2014. She has a special interest in diabetes and long term conditions.',
       availability: 'Monday, Tuesday, Thursday',
     },
     {
       id: 'tm-2',
-      name: 'Dr Ravi Chandran',
+      name: 'Dr Meriadoc Brandybuck',
+      gender: 'Male',
       role: 'GP Partner',
       group: 'Doctors',
-      bio: 'Dr Chandran leads our work on heart health. He also supervises our trainee doctors.',
+      bio: 'Dr Brandybuck leads our work on heart health. He also supervises our trainee doctors.',
       availability: 'Monday to Friday',
     },
     {
       id: 'tm-3',
-      name: 'Dr Helen Marsh',
+      name: 'Dr Poppy Proudfoot',
+      gender: 'Female',
       role: 'Salaried GP',
       group: 'Doctors',
-      bio: "Dr Marsh has a special interest in women's health and contraception.",
+      bio: "Dr Proudfoot has a special interest in women's health and contraception.",
       availability: 'Wednesday, Thursday, Friday',
     },
     {
       id: 'tm-4',
-      name: 'Kirsty Bell',
+      name: 'Marigold Gamgee',
+      gender: 'Female',
       role: 'Advanced Nurse Practitioner',
       group: 'Nursing team',
-      bio: 'Kirsty can assess, diagnose and prescribe for many everyday illnesses.',
+      bio: 'Marigold can assess, diagnose and prescribe for many everyday illnesses.',
       availability: 'Monday to Thursday',
     },
     {
       id: 'tm-5',
-      name: 'Joanne Pryce',
+      name: 'Hamfast Gardner',
+      gender: 'Male',
       role: 'Practice Nurse',
       group: 'Nursing team',
-      bio: 'Joanne runs our asthma, diabetes and travel health clinics.',
+      bio: 'Hamfast runs our asthma, diabetes and travel health clinics.',
     },
     {
       id: 'tm-6',
-      name: 'Sam Whitfield',
+      name: 'Barliman Butterbur',
+      gender: 'Male',
       role: 'Clinical Pharmacist',
       group: 'Nursing team',
-      bio: 'Sam reviews medicines and can answer questions about your prescriptions.',
+      bio: 'Barliman reviews medicines and can answer questions about your prescriptions.',
     },
     {
       id: 'tm-7',
-      name: 'Deborah Hart',
+      name: 'Bilbo Baggins',
+      gender: 'Male',
       role: 'Practice Manager',
       group: 'Management and reception',
-      bio: 'Deborah manages the practice and handles complaints and feedback.',
+      bio: 'Bilbo manages the practice and handles complaints and feedback.',
     },
     {
       id: 'tm-8',
@@ -924,7 +955,7 @@ Tell us who cares for you. With your permission we can share information with th
         id: 'pn-2',
         title: 'Car park resurfacing in September',
         date: '2026-06-30',
-        body: 'Our car park will be resurfaced during the week of 21 September. Parking will be limited. Please allow extra time or use the street parking on Hartley Road.',
+        body: 'Our car park will be resurfaced during the week of 21 September. Parking will be limited. Please allow extra time or use the street parking on Bywater Road.',
         pinned: false,
       },
     ],
@@ -933,14 +964,14 @@ Tell us who cares for you. With your permission we can share information with th
   compliance: {
     cqcRating: 'Good',
     cqcReportUrl: 'https://www.cqc.org.uk/',
-    icbName: 'NHS Greater Manchester Integrated Care Board',
-    icbUrl: 'https://gmintegratedcare.org.uk/',
-    pcnName: 'Fairfield and Ashcroft Primary Care Network',
-    dataProtectionOfficer: 'Deborah Hart',
-    dataProtectionEmail: 'fairfield.dpo@nhs.net',
+    icbName: 'NHS Shire and Buckland Integrated Care Board',
+    icbUrl: '',
+    pcnName: 'Four Farthings Primary Care Network',
+    dataProtectionOfficer: 'Bilbo Baggins',
+    dataProtectionEmail: 'dpo@frogmorton.example',
     icoRegistration: 'Z1234567',
-    complaintsEmail: 'fairfield.complaints@nhs.net',
-    complaintsContactName: 'Deborah Hart, Practice Manager',
+    complaintsEmail: 'complaints@frogmorton.example',
+    complaintsContactName: 'Bilbo Baggins, Practice Manager',
     gpEarningsStatement:
       'All GP practices are required to declare the mean earnings for GPs working to deliver NHS services at the practice.',
     gpEarningsAmount: '£78,400',
@@ -958,7 +989,7 @@ Tell us who cares for you. With your permission we can share information with th
     showSearch: true,
     showTeam: true,
     showNewsInNav: false,
-    siteUrl: 'https://demo.simplesurgery.co.uk',
+    siteUrl: 'https://demo.simplesurgery.co',
     analyticsScriptUrl: '',
     analyticsSiteId: '',
     footerNote: '',

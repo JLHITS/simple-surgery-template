@@ -7,8 +7,14 @@
 export interface StorageDriver {
   /** Human readable name, shown in the admin panel diagnostics. */
   readonly name: string
-  /** Returns the raw JSON string, or null when nothing is stored at that key. */
-  read(key: string): Promise<string | null>
+  /**
+   * Returns the raw JSON string, or null when nothing is stored at that key.
+   *
+   * `fresh` skips the response cache. Used for anything where a stale answer
+   * changes behaviour rather than just content: whether a practice exists at
+   * all, and whether its subscription is still paying.
+   */
+  read(key: string, opts?: { fresh?: boolean }): Promise<string | null>
   /** Persists the raw JSON string. Must be atomic from the caller's point of view. */
   write(key: string, json: string): Promise<void>
   /** True when the driver has everything it needs to work. */

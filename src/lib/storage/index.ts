@@ -69,9 +69,12 @@ export async function getDriver(): Promise<StorageDriver> {
   return cached
 }
 
-export async function readKey(key: string): Promise<string | null> {
+export async function readKey(
+  key: string,
+  opts?: { fresh?: boolean },
+): Promise<string | null> {
   const driver = await getDriver()
-  return driver.read(key)
+  return driver.read(key, opts)
 }
 
 export async function writeKey(key: string, json: string): Promise<void> {

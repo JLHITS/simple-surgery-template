@@ -88,11 +88,13 @@ export const firebaseDriver: StorageDriver = {
     return Boolean(PROJECT_ID && CLIENT_EMAIL && PRIVATE_KEY)
   },
 
-  async read(key) {
+  async read(key, opts) {
     const token = await getAccessToken()
     const res = await fetch(docUrl(key), {
       headers: { Authorization: `Bearer ${token}` },
-      next: { tags: [`store:${key}`], revalidate: 3600 },
+      ...(opts?.fresh
+        ? { cache: 'no-store' as const }
+        : { next: { tags: [`store:${key}`], revalidate: 300 } }),
     })
 
     if (res.status === 404) return null

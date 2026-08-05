@@ -22,12 +22,26 @@ export const upstashDriver: StorageDriver = {
     return Boolean(URL_ENV && TOKEN_ENV)
   },
 
-  async read(key) {
+  async read(key, opts) {
     const res = await fetch(endpoint(`get/${encodeURIComponent(key)}`), {
       headers: { Authorization: `Bearer ${TOKEN_ENV}` },
-      // Tagged per key so one practice saving a change cannot purge another
-      // practice's cache. The save handler revalidates its own tag only.
-      next: { tags: [`store:${key}`], revalidate: 3600 },
+      ...(opts?.fresh
+        ? // No caching at all. A miss cached for an hour would mean a practice
+          // that visits its own URL a moment before provisioning finishes gets
+          // a 404 for the rest of that hour.
+          { cache: 'no-store' as const }
+        : // Tagged per key so one practice saving a change cannot purge
+          // another practice's cache. The save handler revalidates its own
+          // tag only.
+      // Five minutes rather than an hour. A practice's own save purges this tag
+      // immediately, so the TTL only governs changes made elsewhere: chiefly a
+      // brand new site, whose config is written a moment after its tenant. An
+      // hour meant anyone who reached the URL in that gap saw the template's
+      // default practice name until the cache expired.
+      //
+      // The cost is bounded: at most one read per key per five minutes, so a
+      // busy practice site is ~288 reads a day rather than one per visitor.
+          { next: { tags: [`store:${key}`], revalidate: 300 } }),
     })
 
     if (!res.ok) {

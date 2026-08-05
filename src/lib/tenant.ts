@@ -91,7 +91,9 @@ export const getTenant = cache(async (slug: string): Promise<Tenant | null> => {
   if (!clean) return null
 
   try {
-    return parseTenant(await readKey(tenantKey(clean)))
+    // Never cached: this decides whether the practice exists and whether it
+    // is still paying, and both must be current.
+    return parseTenant(await readKey(tenantKey(clean), { fresh: true }))
   } catch (err) {
     console.error(`[simple-surgery] failed to read tenant ${clean}:`, err)
     return null
@@ -114,7 +116,7 @@ export const slugForDomain = cache(async (hostname: string): Promise<string | nu
   if (!host) return null
 
   try {
-    const raw = await readKey(domainKey(host))
+    const raw = await readKey(domainKey(host), { fresh: true })
     return raw ? normaliseSlug(raw.replace(/^"|"$/g, '')) : null
   } catch {
     return null

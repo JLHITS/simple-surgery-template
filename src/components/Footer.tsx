@@ -32,7 +32,7 @@ export function Footer({ config, base }: { config: SiteConfig; base: string }) {
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <h2 className="text-base font-bold">{practice.name}</h2>
-            <address className="mt-3 text-[0.95rem] not-italic leading-relaxed text-nhs-grey-1">
+            <address className="mt-3 break-words text-[0.95rem] not-italic leading-relaxed text-nhs-grey-1">
               {address.map((line) => (
                 <span key={line} className="block">
                   {line}
@@ -48,7 +48,7 @@ export function Footer({ config, base }: { config: SiteConfig; base: string }) {
             )}
             {practice.email && (
               <p className="text-[0.95rem]">
-                <a href={`mailto:${practice.email}`} className="ss-link">
+                <a href={`mailto:${practice.email}`} className="ss-link break-all">
                   {practice.email}
                 </a>
               </p>

@@ -276,6 +276,15 @@ export interface SiteConfig {
      * practice, not to the template.
      */
     showNhsLogo: boolean
+    /**
+     * The week-at-a-glance bar chart above the opening hours.
+     *
+     * On by default because it answers "can I be seen on Saturday?" faster than
+     * a list of times can. A practice with unusual hours, or one that simply
+     * prefers the plain table, can turn it off without losing any information:
+     * everything the chart shows is also written out underneath it.
+     */
+    showHoursTimeline: boolean
     showSearch: boolean
     showTeam: boolean
     showNewsInNav: boolean

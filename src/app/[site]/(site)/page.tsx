@@ -1,8 +1,8 @@
 import Link from 'next/link'
 import { ActionCard, ButtonLink, CardGrid, Section, SectionHeading } from '@/components/ui'
-import { HoursTable } from '@/components/HoursTable'
+import { ExtendedAccessCard, HoursTable, OutOfHoursCard } from '@/components/HoursTable'
 import { Icon } from '@/components/Icon'
-import { NewsList } from '@/components/NewsList'
+import { NewsCard } from '@/components/NewsList'
 import { NoticeBanner } from '@/components/NoticeBanner'
 import { OpenNow } from '@/components/OpenNow'
 import { UrgentHelp } from '@/components/UrgentHelp'
@@ -28,7 +28,7 @@ export default async function HomePage({ params }: Props) {
   const { site } = await params
   const base = siteBase(site)
   const config = await getSiteConfig(site)
-  const { practice, hours, online, notice, services, news } = config
+  const { practice, hours, online, notice, services, news, advanced } = config
 
   const featured = services.filter((s) => s.featured).slice(0, 6)
   const nationalNews =
@@ -184,40 +184,57 @@ export default async function HomePage({ params }: Props) {
         </Section>
       )}
 
-      {/* ------------------------------------------- hours and NHS news */}
+      {/* --------------------------------------------------- opening hours */}
+      {/*
+        Hours and news used to sit in two columns. The hours column is much the
+        taller of the two once closures and extended access are shown, which
+        left the news stranded against a long stretch of white space. They are
+        two full width bands now, so each can use the width it needs.
+      */}
       <Section>
-        <div className="grid gap-12 lg:grid-cols-[1fr_1.1fr]">
-          <div>
-            <SectionHeading title="Opening hours" />
-            <HoursTable
-              days={hours.days}
-              closures={hours.closures}
-              notes={hours.notes}
-              extended={hours.extendedAccess}
-              compact
-            />
-            <div className="mt-6">
-              <ButtonLink href={`${base}/contact`} variant="secondary" icon="pin">
-                How to find us
-              </ButtonLink>
-            </div>
-          </div>
-
-          {nationalNews.length > 0 && (
-            <div>
-              <SectionHeading
-                title="NHS news"
-                action={
-                  <Link href={`${base}/news`} className="ss-link text-sm font-semibold">
-                    More news
-                  </Link>
-                }
-              />
-              <NewsList items={nationalNews} compact />
-            </div>
+        <SectionHeading
+          title="Opening hours"
+          action={
+            <ButtonLink href={`${base}/contact`} variant="secondary" icon="pin">
+              How to find us
+            </ButtonLink>
+          }
+        />
+        <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
+          <HoursTable
+            days={hours.days}
+            closures={hours.closures}
+            notes={hours.notes}
+            showTimeline={advanced.showHoursTimeline}
+            compact
+          />
+          {hours.extendedAccess.enabled ? (
+            <ExtendedAccessCard extended={hours.extendedAccess} />
+          ) : (
+            <OutOfHoursCard info={hours.outOfHoursInfo} />
           )}
         </div>
       </Section>
+
+      {/* ------------------------------------------------------- NHS news */}
+      {nationalNews.length > 0 && (
+        <Section tint>
+          <SectionHeading
+            title="NHS news"
+            description="Published by NHS England, updated automatically."
+            action={
+              <ButtonLink href={`${base}/news`} variant="secondary">
+                More news
+              </ButtonLink>
+            }
+          />
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {nationalNews.map((item) => (
+              <NewsCard key={item.link} item={item} />
+            ))}
+          </div>
+        </Section>
+      )}
     </>
   )
 }

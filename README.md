@@ -8,8 +8,8 @@
 No database. No plugins. No training day.
 
 [View the live sample](https://demo.simplesurgery.co) &nbsp;·&nbsp;
-[Simple Surgery](https://simplesurgery.co) &nbsp;·&nbsp;
-[Deploy your own](#deploy-in-about-ten-minutes)
+[Full deployment guide](GUIDE.md) &nbsp;·&nbsp;
+[Have it done for you](https://www.simplesurgery.co/buy)
 
 </div>
 
@@ -65,7 +65,13 @@ which is based on user testing with over 160 patients.
 Accessibility is WCAG 2.2 AA, above the 2.1 AA legal minimum, with the NHS focus state,
 44px targets, full keyboard operation and semantic landmarks throughout.
 
-## Deploy in about ten minutes
+## Deploy it
+
+**[There is a complete step by step guide](GUIDE.md)**, written for someone comfortable with a
+terminal but not necessarily a developer. It covers every command, every environment variable,
+and the exact DNS records to send your IT team. Roughly an hour end to end.
+
+The short version follows.
 
 ### 1. Get the code
 
@@ -158,9 +164,10 @@ the admin panel to script injection on a patient-facing page.
 ```
 src/
 ├── app/
-│   ├── (site)/          Everything a patient sees
-│   ├── admin/           Password-guarded editor
-│   └── api/admin/       Login, save and image upload
+│   ├── [site]/          One practice: its public pages and its admin panel
+│   │   ├── (site)/      Everything a patient sees
+│   │   └── admin/       Password-guarded editor
+│   └── api/[site]/      Login, save and image upload, scoped to one practice
 ├── components/          UI, including the admin editor
 └── lib/
     ├── config/          Types, seed content, merge, sanitiser
@@ -183,10 +190,14 @@ src/
 
 ## Rather not do any of this?
 
-We will set it up, move your content across, connect your domain and host it for
-£199 a year. No setup fee, no contract, and you still make your own edits.
+Fair enough. We will set it up, host it, connect your domain and keep it updated for **£199 a
+year**. Your site is live in minutes rather than an afternoon, your own staff still make their
+own edits, and because this code is open source you can take the whole thing with you whenever
+you like.
 
-[simplesurgery.co](https://simplesurgery.co)
+No setup fee. No contract.
+
+**[See the hosted option](https://www.simplesurgery.co/buy)**
 
 ## Contributing
 

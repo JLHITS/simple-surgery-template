@@ -1,17 +1,36 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 572 380" width="572" height="380" role="img" aria-label="Simple Surgery">
+  <title>Simple Surgery</title>
   <defs>
-    <mask id="m00B0B0C">
-      <rect x="0" y="0" width="100" height="100" fill="#fff"/>
-      
-  <circle cx="13.3" cy="13.3" r="3.8" fill="#000"/>
-  <circle cx="25.4" cy="13.3" r="3.8" fill="#000"/>
-  <circle cx="37.6" cy="13.3" r="3.8" fill="#000"/>
-  <path fill="#000" d="M37.2 31.4A3.4 3.4 0 0 1 40.6 28h18.5a3.4 3.4 0 0 1 3.4 3.4v16.5a3.4 3.4 0 0 0 3.4 3.4h14.7A3.4 3.4 0 0 1 84 54.7v17.6a3.4 3.4 0 0 1-3.4 3.4H65.9a3.4 3.4 0 0 0-3.4 3.4V106H37.2V79.1a3.4 3.4 0 0 0-3.4-3.4H18.9a3.4 3.4 0 0 1-3.4-3.4V54.7a3.4 3.4 0 0 1 3.4-3.4h14.9a3.4 3.4 0 0 0 3.4-3.4Z"/>
-
+    <clipPath id="sni9491">
+      <rect x="14" y="72" width="544" height="294" rx="10" ry="10"/>
+    </clipPath>
+    <mask id="mni9491">
+      <rect x="0" y="0" width="572" height="380" fill="#fff"/>
+      <rect x="14" y="72" width="544" height="294" rx="10" ry="10" fill="#000"/>
     </mask>
   </defs>
   
   <g transform="translate(0 0)">
-    <rect x="0" y="0" width="100" height="100" rx="13" ry="13" fill="#0B0B0C" mask="url(#m00B0B0C)"/>
+    <rect x="0" y="0" width="572" height="380" rx="26" ry="26" fill="#2B3542" mask="url(#mni9491)"/>
+    <g fill="#5A6577">
+      <circle cx="44" cy="37" r="13"/>
+      <circle cx="90" cy="37" r="13"/>
+      <circle cx="136" cy="37" r="13"/>
+      <rect x="180" y="22" width="352" height="32" rx="11" ry="11"/>
+    </g>
+    <g clip-path="url(#sni9491)">
+      <path fill="#0B76E0" d="M14 366 L14 216 L160 196 Q284 96 412 196 L558 216 L558 366 Z"/>
+      <g fill="#2B3542">
+        <path d="M254 292 h63 a4 4 0 0 1 4 4 v70 h-71 v-70 a4 4 0 0 1 4-4 Z"/>
+        <path d="M62 282 h70 v84 H62 Z"/>
+      </g>
+      <g fill="#3D93EA">
+        <path d="M267 132 h34 a8 8 0 0 1 8 8 v32 a8 8 0 0 0 8 8 h32 a8 8 0 0 1 8 8 v34 a8 8 0 0 1-8 8 h-32 a8 8 0 0 0-8 8 v32 a8 8 0 0 1-8 8 h-34 a8 8 0 0 1-8-8 v-32 a8 8 0 0 0-8-8 h-32 a8 8 0 0 1-8-8 v-34 a8 8 0 0 1 8-8 h32 a8 8 0 0 0 8-8 v-32 a8 8 0 0 1 8-8 Z"/>
+        <rect x="50" y="257" width="77" height="20" rx="6" ry="6"/>
+        <rect x="92" y="322" width="14" height="26" rx="4" ry="4"/>
+        <rect x="390" y="252" width="50" height="45" rx="7" ry="7"/>
+        <rect x="464" y="252" width="50" height="45" rx="7" ry="7"/>
+      </g>
+    </g>
   </g>
 </svg>

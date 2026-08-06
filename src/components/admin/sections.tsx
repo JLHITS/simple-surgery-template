@@ -1190,6 +1190,12 @@ export function AdvancedSection({
           onChange={(showNhsLogo) => set({ showNhsLogo })}
         />
         <Toggle
+          label="Show the opening hours chart"
+          hint="The week-at-a-glance bar chart above your opening hours. Turning it off leaves the plain table, which says exactly the same thing."
+          checked={advanced.showHoursTimeline}
+          onChange={(showHoursTimeline) => set({ showHoursTimeline })}
+        />
+        <Toggle
           label="Show the search box"
           checked={advanced.showSearch}
           onChange={(showSearch) => set({ showSearch })}

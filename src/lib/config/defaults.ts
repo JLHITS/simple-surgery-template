@@ -986,6 +986,7 @@ Tell us who cares for you. With your permission we can share information with th
     colourMode: 'nhs',
     cornerRadius: 'soft',
     showNhsLogo: true,
+    showHoursTimeline: true,
     showSearch: true,
     showTeam: true,
     showNewsInNav: false,

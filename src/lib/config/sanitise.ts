@@ -497,6 +497,7 @@ export function sanitiseConfig(input: unknown, fallback: SiteConfig): SiteConfig
       colourMode: oneOf(advanced.colourMode, ['nhs', 'custom'] as const, 'nhs'),
       cornerRadius: oneOf(advanced.cornerRadius, ['square', 'soft', 'round'] as const, 'soft'),
       showNhsLogo: bool(advanced.showNhsLogo, true),
+      showHoursTimeline: bool(advanced.showHoursTimeline, true),
       showSearch: bool(advanced.showSearch, true),
       showTeam: bool(advanced.showTeam, true),
       showNewsInNav: bool(advanced.showNewsInNav, false),

@@ -108,7 +108,7 @@ export default async function ContactPage({ params }: Props) {
                   <div>
                     <dt className="font-bold">Email</dt>
                     <dd className="mt-0.5">
-                      <a href={`mailto:${practice.email}`} className="ss-link">
+                      <a href={`mailto:${practice.email}`} className="ss-link break-all">
                         {practice.email}
                       </a>
                     </dd>
@@ -127,7 +127,7 @@ export default async function ContactPage({ params }: Props) {
                 <div>
                   <dt className="font-bold">Address</dt>
                   <dd className="mt-0.5">
-                    <address className="not-italic leading-relaxed">
+                    <address className="break-words not-italic leading-relaxed">
                       {addressLines.map((line) => (
                         <span key={line} className="block">
                           {line}
@@ -196,6 +196,7 @@ export default async function ContactPage({ params }: Props) {
                 closures={hours.closures}
                 notes={hours.notes}
                 extended={hours.extendedAccess}
+                showTimeline={config.advanced.showHoursTimeline}
               />
             </div>
 

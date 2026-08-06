@@ -10,6 +10,47 @@ import { Icon } from './Icon'
  * writing, not the practice, and so the practice is not implicitly endorsing
  * anything it did not write.
  */
+/**
+ * One story as a card, for the home page grid.
+ *
+ * The list form works down a narrow column; this works across a full width
+ * band, where three abreast reads better than three stacked.
+ */
+export function NewsCard({ item }: { item: NewsItem }) {
+  return (
+    <a
+      href={item.link}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group flex h-full flex-col radius-card border border-nhs-grey-4 bg-white p-5 no-underline transition-all duration-150 hover:border-nhs-black hover:shadow-[0_2px_0_0_var(--color-nhs-black)] focus-visible:shadow-none"
+    >
+      <span className="flex flex-wrap items-center gap-x-2 text-[0.75rem] font-semibold uppercase tracking-wide text-nhs-grey-1">
+        <span>{item.source}</span>
+        {item.published && (
+          <>
+            <span aria-hidden="true">&middot;</span>
+            <time dateTime={item.published}>{formatDateShort(item.published)}</time>
+          </>
+        )}
+      </span>
+
+      <span className="mt-2 block text-[1.02rem] font-bold leading-snug text-nhs-black">
+        {item.title}
+        <span className="sr-only"> (opens in a new tab)</span>
+      </span>
+
+      <span className="mt-auto flex items-center gap-1.5 pt-4 text-[0.85rem] font-semibold accent-text">
+        Read on nhs.uk
+        <Icon
+          name="external"
+          size={14}
+          className="transition-transform duration-150 group-hover:translate-x-0.5"
+        />
+      </span>
+    </a>
+  )
+}
+
 export function NewsList({ items, compact = false }: { items: NewsItem[]; compact?: boolean }) {
   if (!items.length) {
     return (

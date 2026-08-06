@@ -75,6 +75,20 @@
     }
   }
 
+  html,
+  body {
+    /*
+     * Long email addresses and unbroken URLs are the usual cause of sideways
+     * scroll on a 360px screen, so words break rather than push the layout
+     * wide.
+     *
+     * Deliberately not `overflow-x: hidden`: that hides the symptom rather
+     * than fixing it, and it silently breaks `position: sticky` on descendants
+     * in several browsers, which the admin panel's header and save bar rely on.
+     */
+    overflow-wrap: break-word;
+  }
+
   body {
     margin: 0;
     background: #ffffff;

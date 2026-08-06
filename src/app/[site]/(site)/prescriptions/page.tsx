@@ -81,8 +81,6 @@ export default async function PrescriptionsPage({ params }: Props) {
                   <a
                     href="https://www.nhs.uk/nhs-services/prescriptions/"
                     className="ss-link"
-                    target="_blank"
-                    rel="noopener noreferrer"
                   >
                     Prescription charges and exemptions
                   </a>
@@ -91,8 +89,6 @@ export default async function PrescriptionsPage({ params }: Props) {
                   <a
                     href="https://www.nhs.uk/service-search/pharmacy/find-a-pharmacy"
                     className="ss-link"
-                    target="_blank"
-                    rel="noopener noreferrer"
                   >
                     Find a pharmacy
                   </a>
@@ -101,8 +97,6 @@ export default async function PrescriptionsPage({ params }: Props) {
                   <a
                     href="https://www.nhs.uk/medicines/"
                     className="ss-link"
-                    target="_blank"
-                    rel="noopener noreferrer"
                   >
                     Information about your medicines
                   </a>

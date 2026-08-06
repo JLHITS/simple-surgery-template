@@ -31,8 +31,6 @@ export function Suspended({ practiceName }: { practiceName: string }) {
               <a
                 href="https://111.nhs.uk"
                 className="ss-link"
-                target="_blank"
-                rel="noopener noreferrer"
               >
                 111.nhs.uk
               </a>
@@ -43,8 +41,6 @@ export function Suspended({ practiceName }: { practiceName: string }) {
               <a
                 href="https://www.nhs.uk/service-search/pharmacy/find-a-pharmacy"
                 className="ss-link"
-                target="_blank"
-                rel="noopener noreferrer"
               >
                 Find a pharmacy
               </a>

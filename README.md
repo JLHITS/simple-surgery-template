@@ -25,7 +25,7 @@ current without anybody writing a word.
 
 ## What you get
 
-**Every page the NHS expects, already written**, in plain English at a reading age of 9 to 11:
+**A page and draft wording for everything the NHS expects you to publish**, in plain English at a reading age of 9 to 11:
 
 - Appointments, prescriptions, test results, fit notes, registration, vaccinations, clinics,
   self-referral, proxy access, managing your health online
@@ -62,8 +62,16 @@ which is based on user testing with over 160 patients.
 | No supplier or product names shown to patients | Explicitly required |
 | Urgent care signposting before anything else | Someone having a heart attack needs "call 999" first |
 
-Accessibility is WCAG 2.2 AA, above the 2.1 AA legal minimum, with the NHS focus state,
-44px targets, full keyboard operation and semantic landmarks throughout.
+Accessibility targets WCAG 2.2 AA, above the 2.1 AA legal minimum, with the NHS focus state,
+44px targets, full keyboard operation and semantic landmarks throughout. It has been tested with
+keyboard navigation, automated tooling and screen reader spot checks, but not independently
+audited, so treat it as designed and tested to that standard rather than certified against it.
+
+**What this does not do for you.** The wording that ships is a compliant starting point written
+for a typical practice. It is not a statement of how yours works, and publishing it unread is not
+compliance. Your practice remains the public sector body responsible for its own website, its
+accuracy and its accessibility, whoever built it. What the template saves you is the writing and
+the structure, not the checking.
 
 ## Deploy it
 

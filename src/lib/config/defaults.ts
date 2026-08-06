@@ -40,6 +40,10 @@ export const defaultConfig: SiteConfig = {
       'The building is on one level. There are no steps at the entrance. We have an accessible toilet and a hearing loop at reception.',
     publicTransportInfo:
       'The surgery is on the East Road, opposite The Floating Log. The nearest bus stop is a two minute walk.',
+    boundaryDescription:
+      'We can register you if you live inside our practice area. It covers Frogmorton, Bywater and the villages along the East Road as far as Whitfurrows.',
+    boundaryPostcodes: 'SH1, SH2, SH3 4, SH3 5',
+    boundaryMapUrl: '',
   },
 
   hours: {
@@ -108,7 +112,7 @@ export const defaultConfig: SiteConfig = {
   online: {
     requestUrl: 'https://www.nhs.uk/nhs-app/',
     requestOpenNote:
-      'You can send us a request from 8am to 6pm, Monday to Friday. We reply within 2 working days.',
+      'You can send us a request from 8am to 6:30pm, Monday to Friday, excluding bank holidays. We reply within 2 working days.',
     prescriptionUrl: 'https://www.nhs.uk/nhs-app/nhs-app-help-and-support/',
     registrationUrl: 'https://gp-registration.nhs.uk/',
     nhsAppUrl: 'https://www.nhs.uk/nhs-app/',
@@ -176,9 +180,7 @@ Tell us when you book so we can arrange it.
 If you need a longer appointment, a quiet room, or step free access, tell us and we will sort it out.`,
     prescriptionsIntro:
       'Order your repeat medicines online, through the NHS App, or at the surgery. Allow 3 working days.',
-    prescriptionsBody: `## How to order
-
-The fastest way is the NHS App. You can order in under a minute.
+    prescriptionsBody: `The fastest way is the NHS App. You can order in under a minute.
 
 You can also drop your repeat slip into the box at reception.
 
@@ -356,7 +358,9 @@ Fit notes for NHS purposes are free. We charge for private certificates. Ask rec
       featured: true,
       body: `## Who can register
 
-You can register if you live in our practice area. You do not need proof of address, ID, or immigration status to register.
+You can register if you live inside our practice area. Our boundary is shown further down this page.
+
+You do not need proof of address, ID, or immigration status to register.
 
 We welcome everyone, including people who are homeless or seeking asylum.
 
@@ -640,11 +644,13 @@ Contact us first. You can also complain to the Information Commissioner's Office
       statutory: true,
       showInFooter: true,
       order: 30,
-      body: `We want as many people as possible to be able to use this website.
+      body: `This statement applies to this website only. It does not cover the NHS App, the NHS website, or any online booking or prescription service we link out to. Those services publish their own accessibility statements.
+
+We want as many people as possible to be able to use this website.
 
 ## How accessible this website is
 
-This website meets the Web Content Accessibility Guidelines version 2.2 at level AA.
+This website has been designed and tested against the Web Content Accessibility Guidelines version 2.2 at level AA.
 
 You should be able to:
 
@@ -658,6 +664,18 @@ We do not use pop-ups, overlays or accessibility widgets. NHS England advises ag
 
 We do not publish information as PDF files. Everything is a normal web page.
 
+## Compliance status
+
+We believe this website is fully compliant with WCAG 2.2 level AA.
+
+An independent accessibility audit has not yet been carried out. Until one has, we describe the site as designed and tested against those requirements rather than certified against them.
+
+## Content that is not accessible
+
+Any parts we know about are listed at the bottom of this page. If you find something we have missed, please tell us.
+
+Content published by other organisations, such as maps or documents we link to, is outside our control and may not meet the same standard.
+
 ## If you need information in another format
 
 Tell us what you need and we will try to help. You can ask for:
@@ -667,7 +685,7 @@ Tell us what you need and we will try to help. You can ask for:
 - audio
 - another language
 
-Our contact details are on the contact page.
+Our contact details are on the contact page. We aim to reply within 5 working days.
 
 ## Interpreters and British Sign Language
 
@@ -677,15 +695,17 @@ We can also arrange a British Sign Language interpreter.
 
 ## Reporting a problem
 
-If you find a problem with this website, please tell us. We will look at it and reply.
+If you find a problem with this website, please tell us using the details at the bottom of this page. We will look at it and reply.
 
 ## Enforcement
 
-The Equality and Human Rights Commission enforces the accessibility regulations. If you are unhappy with our reply, contact the Equality Advisory and Support Service at equalityadvisoryservice.com.
+The Equality and Human Rights Commission enforces the Public Sector Bodies (Websites and Mobile Applications) (No. 2) Accessibility Regulations 2018.
 
-## How we tested this site
+If you are unhappy with how we respond to your complaint, contact the Equality Advisory and Support Service at equalityadvisoryservice.com.
 
-This site was tested against WCAG 2.2 level AA using automated tools and manual keyboard and screen reader checks.`,
+## How we tested this website
+
+Details of when this statement was prepared, when the site was last tested and who tested it are shown at the bottom of this page.`,
     },
     {
       id: 'pg-named-gp',
@@ -746,6 +766,12 @@ The declaration for the most recent financial year is shown below. It covers GPs
       showInFooter: true,
       order: 60,
       body: `NHS England asks every practice to publish this charter. It sets out what you can expect from us.
+
+## The national document
+
+NHS England publishes the official version, [You and your general practice](https://www.england.nhs.uk/long-read/you-and-your-general-practice/). It is also available in other languages and in easy read.
+
+What follows is our own summary of what it means here. The national document is the definitive version.
 
 ## What you can expect from us
 
@@ -979,6 +1005,12 @@ Tell us who cares for you. With your permission we can share information with th
     gpEarningsPartTime: '3',
     gpEarningsLocum: '0',
     gpEarningsYear: '2025/26',
+    accessibilityPreparedOn: '2026-08-06',
+    accessibilityReviewedOn: '2026-08-06',
+    accessibilityTestedBy:
+      'Prepared by the practice, using the accessibility testing built into the Simple Surgery template. No independent audit has been carried out yet.',
+    accessibilityKnownIssues:
+      'We are not aware of any part of this website that fails WCAG 2.2 level AA. If you find something, please tell us.',
   },
 
   advanced: {

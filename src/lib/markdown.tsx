@@ -74,16 +74,12 @@ function renderInline(parts: Inline[], keyPrefix: string): ReactNode[] {
   return parts.map((part, i) => {
     const key = `${keyPrefix}-${i}`
     if (part.href) {
-      const external = /^https?:\/\//.test(part.href)
+      // Links open in the same tab, including external ones. NHS England
+      // advises against forcing a new tab: it breaks the browser back button,
+      // which is the control most patients rely on to get out of somewhere.
       return (
-        <a
-          key={key}
-          href={part.href}
-          {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-          className="ss-link"
-        >
+        <a key={key} href={part.href} className="ss-link">
           {part.text}
-          {external && <span className="sr-only"> (opens in a new tab)</span>}
         </a>
       )
     }

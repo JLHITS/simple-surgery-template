@@ -50,17 +50,24 @@ export default async function ContactPage({ params }: Props) {
       <PageHeader title="Contact us" intro={content.contactIntro} />
 
       <div className="ss-container py-10">
+        {/*
+          Points patients at the right page without appearing to discourage the
+          telephone. NHS guidance is that every contact route should be shown
+          and give a consistent experience, so this signposts rather than
+          restricts.
+        */}
         <Callout tone="info" title="Looking for an appointment or a prescription?">
           <p>
-            Do not call for these. It is faster to{' '}
+            Our{' '}
             <a href={`${base}/appointments`} className="ss-link">
-              request an appointment
+              appointments
             </a>{' '}
-            or{' '}
+            and{' '}
             <a href={`${base}/prescriptions`} className="ss-link">
-              order a repeat prescription
+              prescriptions
             </a>{' '}
-            online.
+            pages show every way you can contact us about these, including online, by phone
+            and in person.
           </p>
         </Callout>
 
@@ -139,11 +146,8 @@ export default async function ContactPage({ params }: Props) {
                     <a
                       href={`https://www.google.com/maps/search/?api=1&query=${mapsQuery}`}
                       className="ss-link text-[0.95rem]"
-                      target="_blank"
-                      rel="noopener noreferrer"
                     >
                       Get directions
-                      <span className="sr-only"> (opens in a new tab)</span>
                     </a>
                   </dd>
                 </div>

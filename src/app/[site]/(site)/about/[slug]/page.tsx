@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Callout, PageHeader } from '@/components/ui'
 import { getSiteConfig } from '@/lib/config'
+import { formatDate } from '@/lib/hours'
 import { siteBase } from '@/lib/routing'
 import { markdownToPlainText, renderMarkdown } from '@/lib/markdown'
 
@@ -100,6 +101,48 @@ export default async function AboutSubPage({ params }: Props) {
                 </p>
               )}
             </Callout>
+          </div>
+        )}
+
+        {slug === 'accessibility' && (
+          <div className="mt-8 max-w-2xl">
+            {/*
+              A statement is only compliant if it says when it was prepared,
+              when it was last reviewed and who tested it. Rendering those from
+              config keeps them current without a practice having to remember
+              to edit dates buried inside the page body.
+            */}
+            <h2>Statement details</h2>
+            <dl className="mt-4 divide-y divide-nhs-grey-4 border-y border-nhs-grey-4">
+              <div className="flex flex-wrap justify-between gap-x-6 gap-y-1 py-3">
+                <dt className="font-semibold">Statement prepared on</dt>
+                <dd>
+                  {compliance.accessibilityPreparedOn
+                    ? formatDate(compliance.accessibilityPreparedOn)
+                    : 'Not recorded'}
+                </dd>
+              </div>
+              <div className="flex flex-wrap justify-between gap-x-6 gap-y-1 py-3">
+                <dt className="font-semibold">Last reviewed and tested</dt>
+                <dd>
+                  {compliance.accessibilityReviewedOn
+                    ? formatDate(compliance.accessibilityReviewedOn)
+                    : 'Not recorded'}
+                </dd>
+              </div>
+            </dl>
+            {compliance.accessibilityTestedBy && (
+              <p className="mt-4 text-[0.95rem] leading-relaxed text-nhs-grey-1">
+                <span className="font-semibold text-nhs-black">How it was tested: </span>
+                {compliance.accessibilityTestedBy}
+              </p>
+            )}
+            {compliance.accessibilityKnownIssues && (
+              <p className="mt-3 text-[0.95rem] leading-relaxed text-nhs-grey-1">
+                <span className="font-semibold text-nhs-black">Known problems: </span>
+                {compliance.accessibilityKnownIssues}
+              </p>
+            )}
           </div>
         )}
 

@@ -25,7 +25,7 @@ What you need, and what this actually gets you.
 
 A complete, compliant practice website that your own staff can edit.
 
-Every page the NHS and CQC expect, already written in plain English at a reading age of 9 to 11:
+A page and draft wording for each thing the NHS and CQC expect a practice website to cover, written in plain English at a reading age of 9 to 11:
 
 - Appointments, prescriptions, test results, fit notes, registration, vaccinations, clinics, self-referral, proxy access
 - Complaints, privacy notice, accessibility statement, named GP, GP earnings, freedom of information, practice policies
@@ -33,7 +33,9 @@ Every page the NHS and CQC expect, already written in plain English at a reading
 
 Plus the parts that keep it current without anyone writing anything: national NHS news pulled from NHS England hourly, notices that expire on a date you set, and closures that drop off the page once they have passed.
 
-It is built to NHS England's guidance on GP websites, which is based on user testing with over 160 patients. Six menu items, no sub menus, no PDFs, no pop-ups, and none of the words patients told them they did not understand.
+It is designed to NHS England's guidance on GP websites, which is based on user testing with over 160 patients. Six menu items, no sub menus, no PDFs, no pop-ups, and none of the words patients told them they did not understand.
+
+You still have to review the wording so it matches your own services, and your practice remains legally and contractually responsible for what it publishes. What this saves you is the writing, not the checking.
 
 ### What you need *(10 minutes)*
 
@@ -102,7 +104,7 @@ Work through the admin panel in this order:
 4. **Compliance.** CQC rating, ICB, Primary Care Network, Data Protection Officer, GP earnings.
 5. **Team.** Optional, but patients like knowing who they will see.
 
-Everything else already has compliant wording. You can leave it alone.
+Everything else already has draft wording that follows the guidance. Read it through before you go live: it is a starting point written for a typical practice, not a statement of how yours works.
 
 Changes save straight away. Refresh the site to see them.
 
@@ -176,7 +178,7 @@ Pull in changes to the template as they are made.
 The template gets updates as NHS guidance changes. To take them:
 
 ```
-git remote add upstream https://github.com/YOUR-USERNAME/simple-surgery-template.git
+git remote add upstream https://github.com/JLHITS/simple-surgery-template.git
 git fetch upstream
 git merge upstream/main
 git push

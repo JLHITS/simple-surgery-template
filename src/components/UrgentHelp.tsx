@@ -35,11 +35,8 @@ export function UrgentHelp({ urgent }: { urgent: SiteConfig['urgent'] }) {
               <a
                 href="https://111.nhs.uk"
                 className="ss-link font-semibold"
-                target="_blank"
-                rel="noopener noreferrer"
               >
                 Get help from 111 online
-                <span className="sr-only"> (opens in a new tab)</span>
               </a>
             </p>
           </div>
@@ -51,11 +48,8 @@ export function UrgentHelp({ urgent }: { urgent: SiteConfig['urgent'] }) {
               <a
                 href="https://www.nhs.uk/service-search/pharmacy/find-a-pharmacy"
                 className="ss-link font-semibold"
-                target="_blank"
-                rel="noopener noreferrer"
               >
                 Find a pharmacy near you
-                <span className="sr-only"> (opens in a new tab)</span>
               </a>
             </p>
           </div>

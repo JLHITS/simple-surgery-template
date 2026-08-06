@@ -161,6 +161,33 @@ export function PracticeSection({ site, config, update }: SectionProps) {
           onChange={(mapEmbedUrl) => set({ mapEmbedUrl })}
         />
       </Fieldset>
+
+      <Divider />
+
+      <Fieldset
+        legend="Practice area"
+        description="Who you can register. NHS guidance expects this to be shown as a map, a plan or a list of postcodes, not described in prose alone. It appears on your registration page."
+      >
+        <TextArea
+          label="Describe your boundary"
+          value={practice.boundaryDescription}
+          onChange={(boundaryDescription) => set({ boundaryDescription })}
+          rows={3}
+        />
+        <TextInput
+          label="Postcodes you cover"
+          hint="A simple list, for example: SH1, SH2, SH3 4. Patients check this first."
+          value={practice.boundaryPostcodes}
+          onChange={(boundaryPostcodes) => set({ boundaryPostcodes })}
+        />
+        <TextInput
+          label="Boundary map embed address"
+          hint="Optional. A Google My Maps embed showing your catchment area."
+          type="url"
+          value={practice.boundaryMapUrl}
+          onChange={(boundaryMapUrl) => set({ boundaryMapUrl })}
+        />
+      </Fieldset>
     </div>
   )
 }
@@ -1125,6 +1152,43 @@ export function ComplianceSection({ config, update }: SectionProps) {
           rows={3}
         />
       </Fieldset>
+
+      <Divider />
+
+      <Fieldset
+        legend="Accessibility statement"
+        description="A statement only counts as compliant if it says when it was prepared, when it was last tested and how. These appear at the bottom of your accessibility page."
+      >
+        <div className="grid gap-4 sm:grid-cols-2">
+          <TextInput
+            label="Statement prepared on"
+            type="date"
+            value={compliance.accessibilityPreparedOn}
+            onChange={(accessibilityPreparedOn) => set({ accessibilityPreparedOn })}
+          />
+          <TextInput
+            label="Last reviewed and tested"
+            type="date"
+            hint="Update this whenever you check the site. Once a year is the minimum."
+            value={compliance.accessibilityReviewedOn}
+            onChange={(accessibilityReviewedOn) => set({ accessibilityReviewedOn })}
+          />
+        </div>
+        <TextArea
+          label="How it was tested, and by whom"
+          hint="Say plainly whether an independent audit has been done. Claiming more than you have tested is worse than claiming less."
+          value={compliance.accessibilityTestedBy}
+          onChange={(accessibilityTestedBy) => set({ accessibilityTestedBy })}
+          rows={3}
+        />
+        <TextArea
+          label="Known problems"
+          hint="Anything you know is not accessible yet, and when you expect to fix it. Saying 'none known' is fine."
+          value={compliance.accessibilityKnownIssues}
+          onChange={(accessibilityKnownIssues) => set({ accessibilityKnownIssues })}
+          rows={3}
+        />
+      </Fieldset>
     </div>
   )
 }
@@ -1135,6 +1199,7 @@ export function AdvancedSection({
   config,
   update,
   storage,
+  site,
 }: SectionProps & { storage: { name: string; configured: boolean; persistent: boolean } }) {
   const { advanced, urgent } = config
   const set = (patch: Partial<SiteConfig['advanced']>) =>
@@ -1344,6 +1409,25 @@ export function AdvancedSection({
             redeploy, or your edits will be lost.
           </p>
         )}
+      </Fieldset>
+
+      <Divider />
+
+      <Fieldset legend="Take a copy of your website">
+        <p className="text-[0.85rem] leading-relaxed text-zinc-600">
+          Downloads everything you have written here as a single file. It is the whole site:
+          your details, hours, staff, policies and page wording. Keep a copy somewhere safe,
+          and use it to move to your own hosting whenever you like.
+        </p>
+        <div>
+          <a
+            href={`/api/${site}/admin/export`}
+            download
+            className="inline-flex min-h-11 items-center rounded-lg border border-zinc-300 px-4 text-[0.9rem] font-semibold text-zinc-900 no-underline hover:bg-zinc-50"
+          >
+            Download my website
+          </a>
+        </div>
       </Fieldset>
     </div>
   )

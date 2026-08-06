@@ -107,8 +107,6 @@ export function Footer({ config, base }: { config: SiteConfig; base: string }) {
                 <a
                   href="https://www.nhs.uk"
                   className="ss-link"
-                  target="_blank"
-                  rel="noopener noreferrer"
                 >
                   NHS website
                 </a>
@@ -117,8 +115,6 @@ export function Footer({ config, base }: { config: SiteConfig; base: string }) {
                 <a
                   href="https://111.nhs.uk"
                   className="ss-link"
-                  target="_blank"
-                  rel="noopener noreferrer"
                 >
                   NHS 111 online
                 </a>
@@ -128,8 +124,6 @@ export function Footer({ config, base }: { config: SiteConfig; base: string }) {
                   <a
                     href={`https://www.nhs.uk/services/gp-surgery/${practice.odsCode}`}
                     className="ss-link"
-                    target="_blank"
-                    rel="noopener noreferrer"
                   >
                     Our NHS profile page
                   </a>
@@ -140,8 +134,6 @@ export function Footer({ config, base }: { config: SiteConfig; base: string }) {
                   <a
                     href={compliance.icbUrl}
                     className="ss-link"
-                    target="_blank"
-                    rel="noopener noreferrer"
                   >
                     {compliance.icbName}
                   </a>
@@ -169,8 +161,6 @@ export function Footer({ config, base }: { config: SiteConfig; base: string }) {
                   <a
                     href={compliance.cqcReportUrl}
                     className="ss-link"
-                    target="_blank"
-                    rel="noopener noreferrer"
                   >
                     {compliance.cqcRating}
                   </a>
@@ -190,8 +180,6 @@ export function Footer({ config, base }: { config: SiteConfig; base: string }) {
               <a
                 href="https://www.simplesurgery.co"
                 className="ss-link inline-flex items-center gap-1.5"
-                target="_blank"
-                rel="noopener noreferrer"
               >
                 <SimpleSurgeryMark size={14} />
                 Simple Surgery

@@ -20,8 +20,6 @@ export function NewsCard({ item }: { item: NewsItem }) {
   return (
     <a
       href={item.link}
-      target="_blank"
-      rel="noopener noreferrer"
       className="group flex h-full flex-col radius-card border border-nhs-grey-4 bg-white p-5 no-underline transition-all duration-150 hover:border-nhs-black hover:shadow-[0_2px_0_0_var(--color-nhs-black)] focus-visible:shadow-none"
     >
       <span className="flex flex-wrap items-center gap-x-2 text-[0.75rem] font-semibold uppercase tracking-wide text-nhs-grey-1">
@@ -36,7 +34,6 @@ export function NewsCard({ item }: { item: NewsItem }) {
 
       <span className="mt-2 block text-[1.02rem] font-bold leading-snug text-nhs-black">
         {item.title}
-        <span className="sr-only"> (opens in a new tab)</span>
       </span>
 
       <span className="mt-auto flex items-center gap-1.5 pt-4 text-[0.85rem] font-semibold accent-text">
@@ -59,8 +56,6 @@ export function NewsList({ items, compact = false }: { items: NewsItem[]; compac
         <a
           href="https://www.england.nhs.uk/news/"
           className="ss-link"
-          target="_blank"
-          rel="noopener noreferrer"
         >
           the NHS England news page
         </a>{' '}
@@ -75,8 +70,6 @@ export function NewsList({ items, compact = false }: { items: NewsItem[]; compac
         <li key={item.link}>
           <a
             href={item.link}
-            target="_blank"
-            rel="noopener noreferrer"
             className="group flex flex-col radius-card border border-nhs-grey-4 bg-white p-5 no-underline transition-all duration-150 hover:border-nhs-black hover:shadow-[0_2px_0_0_var(--color-nhs-black)] focus-visible:shadow-none"
           >
             <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.8rem] font-semibold uppercase tracking-wide text-nhs-grey-1">
@@ -92,7 +85,6 @@ export function NewsList({ items, compact = false }: { items: NewsItem[]; compac
             <span className="mt-2 flex items-start gap-3">
               <span className="text-lg font-bold leading-snug text-nhs-black">
                 {item.title}
-                <span className="sr-only"> (opens in a new tab)</span>
               </span>
               <span className="ml-auto mt-1 shrink-0 text-nhs-grey-3 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-nhs-black">
                 <Icon name="external" size={18} />

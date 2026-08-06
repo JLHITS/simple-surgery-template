@@ -30,8 +30,6 @@ export default function NotFound() {
             <a
               href="https://www.nhs.uk/service-search/find-a-gp"
               className="ss-link font-semibold"
-              target="_blank"
-              rel="noopener noreferrer"
             >
               Find a GP on nhs.uk
             </a>

@@ -56,11 +56,9 @@ export function NoticeBanner({ notice }: { notice: Notice }) {
                   <a
                     href={notice.linkUrl}
                     className="ss-link font-semibold"
-                    target="_blank"
-                    rel="noopener noreferrer"
                   >
                     {notice.linkText}
-                    <span className="sr-only"> (opens in a new tab)</span>
+                    
                   </a>
                 ) : (
                   <Link href={notice.linkUrl} className="ss-link font-semibold">

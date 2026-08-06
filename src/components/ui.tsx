@@ -84,7 +84,7 @@ export function ButtonLink({
       {isExternal && (
         <>
           <Icon name="external" size={16} className="opacity-70" />
-          <span className="sr-only">(opens in a new tab)</span>
+          
         </>
       )}
     </>
@@ -92,7 +92,7 @@ export function ButtonLink({
 
   if (isExternal) {
     return (
-      <a href={href} className={classes} target="_blank" rel="noopener noreferrer">
+      <a href={href} className={classes}>
         {inner}
       </a>
     )
@@ -143,7 +143,7 @@ export function ActionCard({
       </div>
       <span className="mt-4 block text-lg font-bold text-nhs-black">
         {title}
-        {isExternal && <span className="sr-only"> (opens in a new tab)</span>}
+        
       </span>
       {description && (
         <span className="mt-1.5 block text-[0.95rem] leading-relaxed text-nhs-grey-1">
@@ -158,7 +158,7 @@ export function ActionCard({
 
   if (isExternal) {
     return (
-      <a href={href} className={classes} target="_blank" rel="noopener noreferrer">
+      <a href={href} className={classes}>
         {content}
       </a>
     )

@@ -143,6 +143,17 @@ export interface SiteConfig {
     parkingInfo: string
     accessInfo: string
     publicTransportInfo: string
+    /**
+     * The practice boundary.
+     *
+     * NHS guidance expects practices to describe who they can register through
+     * a map, a plan or a list of postcodes. A prose description alone leaves
+     * patients guessing, so both a description and an optional map are offered.
+     */
+    boundaryDescription: string
+    boundaryPostcodes: string
+    /** An image or a Google Maps embed showing the catchment area. */
+    boundaryMapUrl: string
   }
 
   hours: {
@@ -257,6 +268,19 @@ export interface SiteConfig {
     gpEarningsPartTime: string
     gpEarningsLocum: string
     gpEarningsYear: string
+
+    /**
+     * Accessibility statement details.
+     *
+     * A statement is only compliant if it says when it was prepared, when it
+     * was last reviewed, who tested it and how. Those are dates and names that
+     * change, so they are fields rather than prose a practice has to remember
+     * to edit inside the page body.
+     */
+    accessibilityPreparedOn: string
+    accessibilityReviewedOn: string
+    accessibilityTestedBy: string
+    accessibilityKnownIssues: string
   }
 
   /** Advanced settings. Practices should rarely need to touch these. */

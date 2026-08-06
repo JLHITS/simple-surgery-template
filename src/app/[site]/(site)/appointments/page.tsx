@@ -80,8 +80,6 @@ export default async function AppointmentsPage({ params }: Props) {
                 <a
                   href="https://111.nhs.uk"
                   className="ss-link"
-                  target="_blank"
-                  rel="noopener noreferrer"
                 >
                   111.nhs.uk
                 </a>{' '}

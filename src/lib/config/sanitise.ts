@@ -383,6 +383,9 @@ export function sanitiseConfig(input: unknown, fallback: SiteConfig): SiteConfig
       parkingInfo: str(practice.parkingInfo, '', LIMITS.medium),
       accessInfo: str(practice.accessInfo, '', LIMITS.medium),
       publicTransportInfo: str(practice.publicTransportInfo, '', LIMITS.medium),
+      boundaryDescription: str(practice.boundaryDescription, '', LIMITS.medium),
+      boundaryPostcodes: str(practice.boundaryPostcodes, '', LIMITS.medium),
+      boundaryMapUrl: url(practice.boundaryMapUrl),
     },
 
     hours: {
@@ -490,6 +493,10 @@ export function sanitiseConfig(input: unknown, fallback: SiteConfig): SiteConfig
       gpEarningsPartTime: str(compliance.gpEarningsPartTime, '', 10),
       gpEarningsLocum: str(compliance.gpEarningsLocum, '', 10),
       gpEarningsYear: str(compliance.gpEarningsYear, '', 20),
+      accessibilityPreparedOn: isoDate(compliance.accessibilityPreparedOn),
+      accessibilityReviewedOn: isoDate(compliance.accessibilityReviewedOn),
+      accessibilityTestedBy: str(compliance.accessibilityTestedBy, '', LIMITS.medium),
+      accessibilityKnownIssues: str(compliance.accessibilityKnownIssues, '', LIMITS.medium),
     },
 
     advanced: {

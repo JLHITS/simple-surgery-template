@@ -48,11 +48,8 @@ export default async function AboutPage({ params }: Props) {
                 <a
                   href={compliance.cqcReportUrl}
                   className="ss-link mt-1 inline-block text-sm"
-                  target="_blank"
-                  rel="noopener noreferrer"
                 >
                   Read our report
-                  <span className="sr-only"> (opens in a new tab)</span>
                 </a>
               )}
             </div>
@@ -67,11 +64,8 @@ export default async function AboutPage({ params }: Props) {
               <a
                 href={`https://www.nhs.uk/services/gp-surgery/${practice.odsCode}`}
                 className="ss-link mt-1 inline-block text-sm"
-                target="_blank"
-                rel="noopener noreferrer"
               >
                 Our NHS profile
-                <span className="sr-only"> (opens in a new tab)</span>
               </a>
             </div>
           )}

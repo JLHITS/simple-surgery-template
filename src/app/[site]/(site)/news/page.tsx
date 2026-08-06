@@ -70,9 +70,7 @@ export default async function NewsPage({ params }: Props) {
                       <a
                         href={item.linkUrl}
                         className="ss-link font-semibold"
-                        {...(/^https?:\/\//.test(item.linkUrl)
-                          ? { target: '_blank', rel: 'noopener noreferrer' }
-                          : {})}
+                        
                       >
                         Read more
                       </a>

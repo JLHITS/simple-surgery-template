@@ -208,6 +208,10 @@ export function HoursSection({ config, update }: SectionProps) {
   const setExtended = (patch: Partial<SiteConfig['hours']['extendedAccess']>) =>
     set({ extendedAccess: { ...extended, ...patch } })
 
+  const accessModes = hours.accessModes
+  const setAccessModes = (patch: Partial<SiteConfig['hours']['accessModes']>) =>
+    set({ accessModes: { ...accessModes, ...patch } })
+
   const setExtendedDay = (day: string, patch: Record<string, unknown>) => {
     setExtended({
       days: extended.days.map((d) => (d.day === day ? { ...d, ...patch } : d)),
@@ -287,6 +291,50 @@ export function HoursSection({ config, update }: SectionProps) {
           onChange={(notes) => set({ notes })}
           rows={2}
         />
+      </Fieldset>
+
+      <Divider />
+
+      <Fieldset
+        legend="Ways to contact us"
+        description="The 2026/27 GP contract requires you to publish when each way of contacting you is available, separately. Each one must cover core hours, normally 8am to 6:30pm."
+      >
+        <Toggle
+          label="Show when each way of contacting us is available"
+          hint="Appears on your Contact and Appointments pages. Switch this off only if you publish the same information somewhere else."
+          checked={accessModes.enabled}
+          onChange={(enabled) => setAccessModes({ enabled })}
+        />
+
+        {accessModes.enabled && (
+          <>
+            <TextInput
+              label="Walk in"
+              hint="When someone can come to the surgery in person."
+              value={accessModes.walkIn}
+              onChange={(walkIn) => setAccessModes({ walkIn })}
+            />
+            <TextInput
+              label="Telephone"
+              hint="When your phone lines are answered."
+              value={accessModes.telephone}
+              onChange={(telephone) => setAccessModes({ telephone })}
+            />
+            <TextInput
+              label="Online consultation"
+              hint="When patients can submit an online request. This must cover core hours."
+              value={accessModes.onlineConsultation}
+              onChange={(onlineConsultation) => setAccessModes({ onlineConsultation })}
+            />
+            <TextArea
+              label="Anything else patients should know"
+              hint="Optional. Use this for branch surgery arrangements or anything that differs."
+              value={accessModes.note}
+              onChange={(note) => setAccessModes({ note })}
+              rows={2}
+            />
+          </>
+        )}
       </Fieldset>
 
       <Divider />
@@ -509,7 +557,7 @@ export function OnlineSection({ config, update }: SectionProps) {
         />
         <TextInput
           label="When patients can use it"
-          hint='For example "You can send us a request from 8am to 6pm, Monday to Friday."'
+          hint='Must cover core hours. For example "You can send us a request from 8am to 6:30pm, Monday to Friday."'
           value={online.requestOpenNote}
           onChange={(requestOpenNote) => set({ requestOpenNote })}
         />
@@ -657,7 +705,15 @@ export function ContentSection({ config, update }: SectionProps) {
                   onChange={(prescriptionsIntro) => set({ prescriptionsIntro })}
                 />
                 <MarkdownArea
+                  label="How to order"
+                  hint="The ways to order that are not a button: the repeat slip box, and whether you take orders by phone. Shown directly under the ordering links."
+                  value={content.prescriptionsOrderNote}
+                  onChange={(prescriptionsOrderNote) => set({ prescriptionsOrderNote })}
+                  rows={6}
+                />
+                <MarkdownArea
                   label="Page content"
+                  hint="Everything after ordering: how long it takes, collection, reviews and charges."
                   value={content.prescriptionsBody}
                   onChange={(prescriptionsBody) => set({ prescriptionsBody })}
                   rows={18}
@@ -1115,6 +1171,37 @@ export function ComplianceSection({ config, update }: SectionProps) {
       <Divider />
 
       <Fieldset
+        legend="Complaining to the Integrated Care Board"
+        description="Patients who would rather not complain to you go to your ICB, not to NHS England. That changed on 1 July 2023, and a great many practice websites still send people to the old NHS England address."
+        columns={2}
+      >
+        <TextInput
+          label="ICB complaints email address"
+          type="email"
+          value={compliance.icbComplaintsEmail}
+          onChange={(icbComplaintsEmail) => set({ icbComplaintsEmail })}
+        />
+        <TextInput
+          label="ICB complaints telephone"
+          value={compliance.icbComplaintsPhone}
+          onChange={(icbComplaintsPhone) => set({ icbComplaintsPhone })}
+        />
+        <TextInput
+          label="ICB complaints web page"
+          type="url"
+          value={compliance.icbComplaintsUrl}
+          onChange={(icbComplaintsUrl) => set({ icbComplaintsUrl })}
+        />
+        <TextInput
+          label="ICB complaints postal address"
+          value={compliance.icbComplaintsAddress}
+          onChange={(icbComplaintsAddress) => set({ icbComplaintsAddress })}
+        />
+      </Fieldset>
+
+      <Divider />
+
+      <Fieldset
         legend="GP earnings"
         description="Every practice must publish this each year. It appears on the GP earnings page."
       >
@@ -1188,6 +1275,80 @@ export function ComplianceSection({ config, update }: SectionProps) {
           onChange={(accessibilityKnownIssues) => set({ accessibilityKnownIssues })}
           rows={3}
         />
+      </Fieldset>
+
+      <Divider />
+
+      <Fieldset
+        legend="Freedom of information publication scheme"
+        description="Adopting the model scheme is only half of it. The Information Commissioner also expects a guide saying what you actually hold, where to get each item, and what it costs. This table is that guide."
+      >
+        <div className="grid gap-3">
+          {compliance.publicationScheme.map((row, index) => {
+            const patchRow = (patch: Partial<(typeof compliance.publicationScheme)[number]>) => {
+              const publicationScheme = [...compliance.publicationScheme]
+              publicationScheme[index] = { ...row, ...patch }
+              set({ publicationScheme })
+            }
+
+            return (
+              <div
+                key={row.id}
+                className="grid gap-2 rounded-lg border border-zinc-200 p-3 sm:grid-cols-[1.4fr_1fr_1fr_auto]"
+              >
+                <TextInput
+                  label={index === 0 ? 'Information' : ''}
+                  value={row.information}
+                  onChange={(information) => patchRow({ information })}
+                />
+                <TextInput
+                  label={index === 0 ? 'Where available' : ''}
+                  value={row.where}
+                  onChange={(where) => patchRow({ where })}
+                />
+                <TextInput
+                  label={index === 0 ? 'Charge' : ''}
+                  value={row.charge}
+                  onChange={(charge) => patchRow({ charge })}
+                />
+                <div className={index === 0 ? 'flex items-end pb-1' : 'flex items-center'}>
+                  <SmallButton
+                    tone="danger"
+                    onClick={() =>
+                      set({
+                        publicationScheme: compliance.publicationScheme.filter(
+                          (_, i) => i !== index,
+                        ),
+                      })
+                    }
+                  >
+                    Remove
+                  </SmallButton>
+                </div>
+              </div>
+            )
+          })}
+
+          <div>
+            <SmallButton
+              onClick={() =>
+                set({
+                  publicationScheme: [
+                    ...compliance.publicationScheme,
+                    {
+                      id: newId('ps'),
+                      information: '',
+                      where: '',
+                      charge: 'Free',
+                    },
+                  ],
+                })
+              }
+            >
+              Add a row
+            </SmallButton>
+          </div>
+        </div>
       </Fieldset>
     </div>
   )

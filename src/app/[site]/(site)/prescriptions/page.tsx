@@ -34,8 +34,9 @@ export default async function PrescriptionsPage({ params }: Props) {
       <PageHeader title="Prescriptions" intro={content.prescriptionsIntro} />
 
       <div className="ss-container py-10">
-        <h2 className="sr-only">How to order</h2>
-        <CardGrid columns={3}>
+        <h2>How to order</h2>
+        <div className="mt-5">
+          <CardGrid columns={3}>
           {online.nhsAppUrl && (
             <ActionCard
               href={online.nhsAppUrl}
@@ -61,7 +62,19 @@ export default async function PrescriptionsPage({ params }: Props) {
               external={false}
             />
           )}
-        </CardGrid>
+          </CardGrid>
+        </div>
+
+        {/*
+          The ways to order that are not a button. These used to sit at the top
+          of the body, which meant the page had the ordering methods twice: once
+          as cards under "How to order", then again in prose immediately below.
+        */}
+        {content.prescriptionsOrderNote && (
+          <div className="ss-prose mt-6 max-w-2xl">
+            {renderMarkdown(content.prescriptionsOrderNote)}
+          </div>
+        )}
 
         <div className="mt-10 grid gap-12 lg:grid-cols-[1fr_18rem]">
           <div className="ss-prose">{renderMarkdown(content.prescriptionsBody)}</div>

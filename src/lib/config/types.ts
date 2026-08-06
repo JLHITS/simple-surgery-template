@@ -95,6 +95,23 @@ export interface InfoPage {
   order: number
 }
 
+/**
+ * One line of the freedom of information publication scheme.
+ *
+ * Adopting the ICO's model scheme is only half of it. The ICO also expects a
+ * guide identifying what information is actually available, where to get each
+ * item, and what it costs. A list of the seven classes on its own is not the
+ * commitment the scheme requires.
+ */
+export interface PublicationSchemeRow {
+  id: string
+  information: string
+  /** Where a member of the public gets it, e.g. "About the surgery". */
+  where: string
+  /** "Free", or what a copy costs. */
+  charge: string
+}
+
 export interface PracticeNewsItem {
   id: string
   title: string
@@ -187,6 +204,28 @@ export interface SiteConfig {
       /** How to book, e.g. "Call us or ask through the NHS App." */
       bookingNote: string
     }
+
+    /**
+     * When each way of contacting the practice is available.
+     *
+     * The 2026/27 GP contract requires practices to publish the availability
+     * of each access mode separately: walking in, telephoning, and submitting
+     * an online consultation request. Each must be available throughout core
+     * hours, normally 8am to 6:30pm.
+     *
+     * Held as three independent strings rather than derived from `days`
+     * because they genuinely differ in practice. A branch surgery may close at
+     * lunchtime while the phones stay open, and a practice that hits core
+     * hours online through a hub will word that differently again.
+     */
+    accessModes: {
+      enabled: boolean
+      walkIn: string
+      telephone: string
+      onlineConsultation: string
+      /** Optional line under the three, for site-specific arrangements. */
+      note: string
+    }
   }
 
   urgent: {
@@ -227,6 +266,13 @@ export interface SiteConfig {
     appointmentsIntro: string
     appointmentsBody: string
     prescriptionsIntro: string
+    /**
+     * The ways to order that are not a button: the paper slip box, and whether
+     * the practice takes telephone orders. Rendered directly under the ordering
+     * cards so there is one "How to order" section rather than cards followed
+     * by a body that repeats them.
+     */
+    prescriptionsOrderNote: string
     prescriptionsBody: string
     aboutIntro: string
     aboutBody: string
@@ -261,6 +307,19 @@ export interface SiteConfig {
     icoRegistration: string
     complaintsEmail: string
     complaintsContactName: string
+
+    /**
+     * Where a patient complains if they would rather not come to the practice.
+     *
+     * Since 1 July 2023 this is the patient's Integrated Care Board, not NHS
+     * England. Practice websites that still name NHS England are sending
+     * people to an address that will redirect them at best. The ICB varies by
+     * practice, so these are fields rather than fixed copy.
+     */
+    icbComplaintsEmail: string
+    icbComplaintsPhone: string
+    icbComplaintsUrl: string
+    icbComplaintsAddress: string
     /** Mandatory annual GP earnings declaration. */
     gpEarningsStatement: string
     gpEarningsAmount: string
@@ -281,6 +340,9 @@ export interface SiteConfig {
     accessibilityReviewedOn: string
     accessibilityTestedBy: string
     accessibilityKnownIssues: string
+
+    /** The freedom of information publication scheme guide. */
+    publicationScheme: PublicationSchemeRow[]
   }
 
   /** Advanced settings. Practices should rarely need to touch these. */

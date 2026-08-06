@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { AccessModes } from '@/components/AccessModes'
 import { ActionCard, ButtonLink, CardGrid, Callout, PageHeader } from '@/components/ui'
 import { Icon } from '@/components/Icon'
 import { getSiteConfig } from '@/lib/config'
@@ -66,6 +67,13 @@ export default async function AppointmentsPage({ params }: Props) {
             />
           )}
         </CardGrid>
+
+        {/*
+          Availability of each access mode, which the 2026/27 contract requires
+          to be published separately. Directly under the three ways of getting
+          in touch, so the answer to "is that open now" is next to the button.
+        */}
+        <AccessModes accessModes={hours.accessModes} className="mt-10 max-w-2xl" />
 
         <div className="mt-10 grid gap-12 lg:grid-cols-[1fr_18rem]">
           <div className="ss-prose">{renderMarkdown(content.appointmentsBody)}</div>

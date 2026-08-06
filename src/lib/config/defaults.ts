@@ -97,6 +97,14 @@ export const defaultConfig: SiteConfig = {
       bookingNote:
         'Book these in advance by calling us or asking through the NHS App. You cannot turn up without an appointment.',
     },
+
+    accessModes: {
+      enabled: true,
+      walkIn: 'Monday to Friday, 8am to 6:30pm',
+      telephone: 'Monday to Friday, 8am to 6:30pm',
+      onlineConsultation: 'Monday to Friday, 8am to 6:30pm',
+      note: 'All three are available throughout our core hours. We are closed on bank holidays.',
+    },
   },
 
   urgent: {
@@ -180,13 +188,12 @@ Tell us when you book so we can arrange it.
 If you need a longer appointment, a quiet room, or step free access, tell us and we will sort it out.`,
     prescriptionsIntro:
       'Order your repeat medicines online, through the NHS App, or at the surgery. Allow 3 working days.',
-    prescriptionsBody: `The fastest way is the NHS App. You can order in under a minute.
+    prescriptionsOrderNote: `The fastest way is the NHS App. You can order in under a minute.
 
-You can also drop your repeat slip into the box at reception.
+You can also drop your repeat slip into the box at reception, or post it to us.
 
-We cannot take prescription requests over the phone. This is to avoid mistakes with medicine names and doses.
-
-## How long it takes
+We cannot take prescription requests over the phone. This is to avoid mistakes with medicine names and doses.`,
+    prescriptionsBody: `## How long it takes
 
 Allow 3 working days. This does not include weekends or bank holidays.
 
@@ -568,7 +575,11 @@ You can ask the Parliamentary and Health Service Ombudsman to review it. Call 03
 
 ## If you would rather not complain to us
 
-You can complain to NHS England instead. Call 0300 311 22 33 or email england.contactus@nhs.net.
+You can complain to our Integrated Care Board instead. Since July 2023, Integrated Care Boards handle complaints about GP practices. NHS England no longer does.
+
+You cannot normally ask us and the Integrated Care Board to look at the same complaint at the same time. Choose one.
+
+Their details are at the bottom of this page.
 
 ## Free, independent help
 
@@ -666,9 +677,11 @@ We do not publish information as PDF files. Everything is a normal web page.
 
 ## Compliance status
 
-We believe this website is fully compliant with WCAG 2.2 level AA.
+This website is partially compliant with the Web Content Accessibility Guidelines version 2.2 level AA, because of the reason set out below.
 
-An independent accessibility audit has not yet been carried out. Until one has, we describe the site as designed and tested against those requirements rather than certified against them.
+We are not aware of any part of this website that fails those requirements. We say partially compliant rather than fully compliant because no independent accessibility audit has been carried out, and government guidance is that "fully compliant" should only be claimed where testing gives enough evidence to support it. Our own testing is described at the bottom of this page.
+
+If an audit is carried out and finds nothing, we will update this section.
 
 ## Content that is not accessible
 
@@ -821,16 +834,17 @@ Tell us. Our complaints page explains how.`,
 
 ## Our publication scheme
 
-We follow the Information Commissioner's model publication scheme for GP practices.
-
-This means we routinely publish information about:
+We have adopted the Information Commissioner's model publication scheme for GP practices. This commits us to routinely publishing information in seven classes:
 
 - who we are and what we do
 - what we spend and how we spend it
 - our priorities and how we are doing
 - how we make decisions
 - our policies and procedures
+- lists and registers we hold
 - the services we offer
+
+The guide below sets out what we actually hold in those classes, where to get each item, and what it costs. Anything already on this website is free.
 
 ## Making a request
 
@@ -848,7 +862,11 @@ We cannot give you personal information about patients. If you want your own rec
 
 ## Charges
 
-Most requests are free. We may charge for photocopying or postage. We will tell you before we do.
+Information published on this website is free.
+
+For anything we have to copy or post, we charge our actual costs: 10p per sheet of A4 photocopying, plus the actual cost of postage. We will tell you the charge and agree it with you before we do the work.
+
+We do not charge for the time it takes us to find the information.
 
 ## If you are unhappy with our reply
 
@@ -998,6 +1016,10 @@ Tell us who cares for you. With your permission we can share information with th
     icoRegistration: 'Z1234567',
     complaintsEmail: 'complaints@frogmorton.example',
     complaintsContactName: 'Bilbo Baggins, Practice Manager',
+    icbComplaintsEmail: 'complaints@shireandbuckland.example',
+    icbComplaintsPhone: '01632 960 940',
+    icbComplaintsUrl: '',
+    icbComplaintsAddress: 'Patient Experience Team, NHS Shire and Buckland ICB, Bywater',
     gpEarningsStatement:
       'All GP practices are required to declare the mean earnings for GPs working to deliver NHS services at the practice.',
     gpEarningsAmount: '£78,400',
@@ -1011,6 +1033,68 @@ Tell us who cares for you. With your permission we can share information with th
       'Prepared by the practice, using the accessibility testing built into the Simple Surgery template. No independent audit has been carried out yet.',
     accessibilityKnownIssues:
       'We are not aware of any part of this website that fails WCAG 2.2 level AA. If you find something, please tell us.',
+    publicationScheme: [
+      {
+        id: 'ps-1',
+        information: 'Who we are, our staff and how to contact us',
+        where: 'About the surgery, and the contact page',
+        charge: 'Free',
+      },
+      {
+        id: 'ps-2',
+        information: 'The services we offer, and our opening hours',
+        where: 'Services, and the contact page',
+        charge: 'Free',
+      },
+      {
+        id: 'ps-3',
+        information: 'Our policies and procedures',
+        where: 'Practice policies',
+        charge: 'Free',
+      },
+      {
+        id: 'ps-4',
+        information: 'Average GP earnings, published annually',
+        where: 'GP earnings',
+        charge: 'Free',
+      },
+      {
+        id: 'ps-5',
+        information: 'Our complaints procedure, and how to use it',
+        where: 'Complaints and feedback',
+        charge: 'Free',
+      },
+      {
+        id: 'ps-6',
+        information: 'Our CQC inspection rating and report',
+        where: 'Linked from About the surgery and the footer',
+        charge: 'Free, published by the CQC',
+      },
+      {
+        id: 'ps-7',
+        information: 'Priorities, plans and how we are performing',
+        where: 'Ask the Practice Manager',
+        charge: 'Free by email. Paper copies charged as below',
+      },
+      {
+        id: 'ps-8',
+        information: 'What we spend and how we spend it, for our NHS work',
+        where: 'Ask the Practice Manager',
+        charge: 'Free by email. Paper copies charged as below',
+      },
+      {
+        id: 'ps-9',
+        information: 'How we make decisions, including relevant minutes',
+        where: 'Ask the Practice Manager',
+        charge: 'Free by email. Paper copies charged as below',
+      },
+      {
+        id: 'ps-10',
+        information: 'Lists and registers we hold, where publishing them is lawful',
+        where: 'Ask the Practice Manager',
+        charge: 'Free by email. Paper copies charged as below',
+      },
+    ],
   },
 
   advanced: {

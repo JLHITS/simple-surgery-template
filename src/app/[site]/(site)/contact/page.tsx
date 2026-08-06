@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Callout, PageHeader } from '@/components/ui'
+import { AccessModes } from '@/components/AccessModes'
 import { HoursTable } from '@/components/HoursTable'
 import { Icon } from '@/components/Icon'
 import { OpenNow } from '@/components/OpenNow'
@@ -207,6 +208,14 @@ export default async function ContactPage({ params }: Props) {
             {hours.receptionNote && (
               <p className="mt-4 text-[0.95rem] text-nhs-grey-1">{hours.receptionNote}</p>
             )}
+
+            {/*
+              Each access mode's availability, published separately as the
+              2026/27 contract requires. It sits under the opening hours
+              because "when is the surgery open" and "when can I phone" are
+              different questions that patients ask in that order.
+            */}
+            <AccessModes accessModes={hours.accessModes} className="mt-8" />
 
             <div className="mt-8">
               <Callout tone="warning" title="When we are closed">

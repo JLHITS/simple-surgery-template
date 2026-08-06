@@ -4,6 +4,7 @@ import type {
   NoticeLevel,
   OpeningDay,
   PracticeNewsItem,
+  PublicationSchemeRow,
   QuickLink,
   ServiceItem,
   SiteConfig,
@@ -339,6 +340,31 @@ function sanitiseQuickLinks(value: unknown): QuickLink[] {
     .filter((l): l is QuickLink => l !== null)
 }
 
+/**
+ * The freedom of information publication scheme guide.
+ *
+ * A row with no description of the information is meaningless, so those are
+ * dropped. A missing charge is not: silence there reads as free, and free is
+ * the honest default for anything already published on the website.
+ */
+function sanitisePublicationScheme(value: unknown): PublicationSchemeRow[] {
+  return arr(value)
+    .map((item, i): PublicationSchemeRow | null => {
+      const source = obj(item)
+      const information = str(source.information, '', LIMITS.medium)
+      if (!information) return null
+
+      return {
+        id: id(source.id, 'ps', i),
+        information,
+        where: str(source.where, '', LIMITS.medium),
+        charge: str(source.charge, 'Free', LIMITS.medium),
+      }
+    })
+    .filter((r): r is PublicationSchemeRow => r !== null)
+    .slice(0, 40)
+}
+
 /* ------------------------------------------------------------------- main */
 
 export function sanitiseConfig(input: unknown, fallback: SiteConfig): SiteConfig {
@@ -405,6 +431,21 @@ export function sanitiseConfig(input: unknown, fallback: SiteConfig): SiteConfig
           bookingNote: str(extended.bookingNote, '', LIMITS.medium),
         }
       })(),
+      accessModes: (() => {
+        const modes = obj(hours.accessModes)
+        const seed = fallback.hours.accessModes
+        return {
+          enabled: bool(modes.enabled, true),
+          walkIn: str(modes.walkIn, seed.walkIn, LIMITS.medium),
+          telephone: str(modes.telephone, seed.telephone, LIMITS.medium),
+          onlineConsultation: str(
+            modes.onlineConsultation,
+            seed.onlineConsultation,
+            LIMITS.medium,
+          ),
+          note: str(modes.note, '', LIMITS.medium),
+        }
+      })(),
     },
 
     urgent: {
@@ -451,6 +492,11 @@ export function sanitiseConfig(input: unknown, fallback: SiteConfig): SiteConfig
         fallback.content.prescriptionsIntro,
         LIMITS.medium,
       ),
+      prescriptionsOrderNote: str(
+        content.prescriptionsOrderNote,
+        fallback.content.prescriptionsOrderNote,
+        LIMITS.medium,
+      ),
       prescriptionsBody: str(content.prescriptionsBody, '', LIMITS.long),
       aboutIntro: str(content.aboutIntro, fallback.content.aboutIntro, LIMITS.medium),
       aboutBody: str(content.aboutBody, '', LIMITS.long),
@@ -483,6 +529,10 @@ export function sanitiseConfig(input: unknown, fallback: SiteConfig): SiteConfig
       icoRegistration: str(compliance.icoRegistration, '', 40),
       complaintsEmail: str(compliance.complaintsEmail, '', 120),
       complaintsContactName: str(compliance.complaintsContactName),
+      icbComplaintsEmail: str(compliance.icbComplaintsEmail, '', 120),
+      icbComplaintsPhone: str(compliance.icbComplaintsPhone, '', 40),
+      icbComplaintsUrl: url(compliance.icbComplaintsUrl),
+      icbComplaintsAddress: str(compliance.icbComplaintsAddress, '', LIMITS.medium),
       gpEarningsStatement: str(
         compliance.gpEarningsStatement,
         fallback.compliance.gpEarningsStatement,
@@ -497,6 +547,7 @@ export function sanitiseConfig(input: unknown, fallback: SiteConfig): SiteConfig
       accessibilityReviewedOn: isoDate(compliance.accessibilityReviewedOn),
       accessibilityTestedBy: str(compliance.accessibilityTestedBy, '', LIMITS.medium),
       accessibilityKnownIssues: str(compliance.accessibilityKnownIssues, '', LIMITS.medium),
+      publicationScheme: sanitisePublicationScheme(compliance.publicationScheme),
     },
 
     advanced: {

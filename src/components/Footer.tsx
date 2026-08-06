@@ -2,6 +2,7 @@ import Link from 'next/link'
 import type { SiteConfig } from '@/lib/config/types'
 import { formatDateShort } from '@/lib/hours'
 import { NhsLogo } from './NhsLogo'
+import { SimpleSurgeryMark } from './SimpleSurgeryMark'
 
 /**
  * Site footer.
@@ -184,14 +185,15 @@ export function Footer({ config, base }: { config: SiteConfig; base: string }) {
           </p>
 
           {advanced.showCredit && (
-            <p>
-              Built with{' '}
+            <p className="flex items-center gap-1.5">
+              <span>Built with</span>
               <a
-                href="https://simplesurgery.co"
-                className="ss-link"
+                href="https://www.simplesurgery.co"
+                className="ss-link inline-flex items-center gap-1.5"
                 target="_blank"
                 rel="noopener noreferrer"
               >
+                <SimpleSurgeryMark size={14} />
                 Simple Surgery
               </a>
             </p>

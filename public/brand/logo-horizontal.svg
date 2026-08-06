@@ -1,39 +1,23 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 110" width="460" height="110" role="img" aria-label="Simple Surgery">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 470 112" width="470" height="112" role="img" aria-label="Simple Surgery">
   <title>Simple Surgery</title>
-  <g transform="translate(8 20) scale(0.185)"><defs>
-    <clipPath id="ska7iwl">
-      <rect x="14" y="72" width="544" height="294" rx="10" ry="10"/>
-    </clipPath>
-    <mask id="mka7iwl">
-      <rect x="0" y="0" width="572" height="380" fill="#fff"/>
-      <rect x="14" y="72" width="544" height="294" rx="10" ry="10" fill="#000"/>
-    </mask>
-  </defs>
+  <g transform="translate(10 12) scale(0.176)">
   
   <g transform="translate(0 0)">
-    <rect x="0" y="0" width="572" height="380" rx="26" ry="26" fill="#2B3542" mask="url(#mka7iwl)"/>
-    <g fill="#5A6577">
-      <circle cx="44" cy="37" r="13"/>
-      <circle cx="90" cy="37" r="13"/>
-      <circle cx="136" cy="37" r="13"/>
-      <rect x="180" y="22" width="352" height="32" rx="11" ry="11"/>
+    <g fill="none" stroke="#111111" stroke-width="17" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M320 9 H191 V170 H9 V328 H191 V488 H329 V328 H484 A27 27 0 0 0 511 301 V36 A27 27 0 0 0 484 9 H340 V170"/>
+    <path d="M368 66 h34"/>
+    <path d="M428 66 h50"/>
+    <path d="M352 116 h92"/>
+    <path d="M260 76 v88"/>
+    <path d="M260 334 v88"/>
+    <path d="M80 249 h100"/>
+    <path d="M236 223 l-25 26 25 26"/>
+    <path d="M284 223 l25 26-25 26"/>
+    <path d="M322 249 h14 l21-76 25 130 21-82 15 28 h64"/>
     </g>
-    <g clip-path="url(#ska7iwl)">
-      <path fill="#0B76E0" d="M14 366 L14 216 L160 196 Q284 96 412 196 L558 216 L558 366 Z"/>
-      <g fill="#2B3542">
-        <path d="M254 292 h63 a4 4 0 0 1 4 4 v70 h-71 v-70 a4 4 0 0 1 4-4 Z"/>
-        <path d="M62 282 h70 v84 H62 Z"/>
-      </g>
-      <g fill="#3D93EA">
-        <path d="M267 132 h34 a8 8 0 0 1 8 8 v32 a8 8 0 0 0 8 8 h32 a8 8 0 0 1 8 8 v34 a8 8 0 0 1-8 8 h-32 a8 8 0 0 0-8 8 v32 a8 8 0 0 1-8 8 h-34 a8 8 0 0 1-8-8 v-32 a8 8 0 0 0-8-8 h-32 a8 8 0 0 1-8-8 v-34 a8 8 0 0 1 8-8 h32 a8 8 0 0 0 8-8 v-32 a8 8 0 0 1 8-8 Z"/>
-        <rect x="50" y="257" width="77" height="20" rx="6" ry="6"/>
-        <rect x="92" y="322" width="14" height="26" rx="4" ry="4"/>
-        <rect x="390" y="252" width="50" height="45" rx="7" ry="7"/>
-        <rect x="464" y="252" width="50" height="45" rx="7" ry="7"/>
-      </g>
-    </g>
+    <path d="M449 88 V152 L464 138 L475 159 L487 153 L476 132 L497 129 Z" fill="#111111" stroke="#111111" stroke-width="9" stroke-linejoin="round"/>
   </g>
 </g>
-  <text x="132" y="58" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="34" font-weight="700" letter-spacing="-1.2" fill="#0B0B0C">Simple Surgery</text>
-  <text x="133" y="82" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="15" font-weight="500" letter-spacing="0.4" fill="#0B0B0C" opacity="0.55">Websites for GP practices</text>
+  <text x="120" y="60" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="34" font-weight="700" letter-spacing="-1.2" fill="#111111">Simple Surgery</text>
+  <text x="121" y="84" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="15" font-weight="500" letter-spacing="0.4" fill="#111111" opacity="0.55">Websites for GP practices</text>
 </svg>

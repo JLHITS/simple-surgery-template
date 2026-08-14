@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="public/mark.svg" alt="" width="72" height="72">
+<img src="public/mark.svg" alt="" width="184" height="72">
 
 # Simple Surgery
 

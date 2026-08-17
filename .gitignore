@@ -13,7 +13,7 @@ build/
 !.env.example
 
 # Content written by the local file storage driver
-data/site.json
+data/
 
 .DS_Store
 Thumbs.db

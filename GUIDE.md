@@ -31,6 +31,8 @@ A page and draft wording for each thing the NHS and CQC expect a practice websit
 - Complaints, privacy notice, accessibility statement, named GP, GP earnings, freedom of information, practice policies
 - The "You and your general practice" patient charter, a contractual requirement since 1 October 2025
 
+If you already have a website, the admin panel can read it and bring your details across, so you are checking rather than retyping.
+
 Plus the parts that keep it current without anyone writing anything: national NHS news pulled from NHS England hourly, notices that expire on a date you set, and closures that drop off the page once they have passed.
 
 It is designed to NHS England's guidance on GP websites, which is based on user testing with over 160 patients. Six menu items, no sub menus, no PDFs, no pop-ups, and none of the words patients told them they did not understand.
@@ -95,6 +97,10 @@ Have a look around the admin panel before changing anything. Practice details an
 ### Make it yours *(20 minutes)*
 
 Replace the demo details with your practice.
+
+**If you already have a website, start with Migration.** Put your current address into the Migration section and it will read your existing site: your name, phone, address, ODS code, opening hours, online service links, CQC link and often your staff list. You tick what to bring across, and nothing is saved until you press Save.
+
+It will not get everything, and it will occasionally get something wrong, so check what it brings you. It saves most of the typing, which is the point. Then carry on below with whatever it missed.
 
 Work through the admin panel in this order:
 

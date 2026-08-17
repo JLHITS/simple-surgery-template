@@ -167,6 +167,49 @@ ends up with three fonts and a broken heading structure that fails accessibility
 in `src/lib/markdown.tsx` emits React elements and never raw HTML, so there is no route from
 the admin panel to script injection on a patient-facing page.
 
+### Migration: reading your old website
+
+Moving from another supplier is mostly retyping, so the admin panel has a **Migration** section
+that reads your existing website and offers to bring what it finds across. Give it your current
+address and nothing else.
+
+It reads the home page, then the handful of pages most likely to carry facts worth having:
+contact, opening times, about, staff, appointments, prescriptions. It looks for structured data
+first, falls back to patterns, and tells you which it used.
+
+What it can usually find:
+
+| | Where it comes from |
+|---|---|
+| Practice name | Structured data, Open Graph, or the page title |
+| Phone numbers | `tel:` links, then numbers in the text |
+| Email address | `mailto:` links, preferring nhs.net |
+| Address and postcode | Structured data, then the text around a postcode |
+| ODS code | Your online consultation link, which usually contains it |
+| Opening hours | Structured data, then tables, then lines of text |
+| Online service links | Recognised by supplier: Accurx, eConsult, PATCHS, Klinik, SystmOnline, Patient Access, the NHS App |
+| CQC report link | A link to cqc.org.uk |
+| Integrated Care Board | The phrase in your page text |
+| Logo | Structured data or an image marked as a logo, on your own domain |
+| Staff names | Guessed from your team page, and flagged as a guess |
+
+Three things make this safe to use on a live site:
+
+1. **The scan writes nothing.** It returns a list of findings.
+2. **You tick what to bring across.** Confident findings start ticked, guesses do not.
+3. **Applying only changes the unsaved draft.** You still have to press Save, and everything
+   goes through the same sanitiser as anything you type.
+
+**It will not find everything and it will sometimes be wrong.** It is reading pages written for
+people, not for machines. Check the opening hours and the phone number before you save: those
+are the two things a patient acts on immediately. Policies, page wording and practice news are
+not imported at all, because the template already ships compliant wording for those.
+
+The fetcher refuses private and reserved addresses, checks every redirect hop against the
+resolved IP rather than the hostname, caps size and time, and is behind the admin password. An
+endpoint that fetches arbitrary URLs is a server side request forgery risk, and it is treated as
+one: see `src/lib/import/fetch.ts`.
+
 ## Project layout
 
 ```
@@ -175,10 +218,11 @@ src/
 │   ├── [site]/          One practice: its public pages and its admin panel
 │   │   ├── (site)/      Everything a patient sees
 │   │   └── admin/       Password-guarded editor
-│   └── api/[site]/      Login, save and image upload, scoped to one practice
+│   └── api/[site]/      Login, save, export, import and upload, scoped to one practice
 ├── components/          UI, including the admin editor
 └── lib/
     ├── config/          Types, seed content, merge, sanitiser
+    ├── import/          Reading a practice's old website: fetch, crawl, extract
     ├── storage/         Pluggable drivers
     ├── auth.ts          Password check and session cookie
     ├── hours.ts         Opening hours, closures, week timeline

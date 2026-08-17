@@ -15,8 +15,10 @@ import {
   ServicesSection,
   TeamSection,
 } from './sections'
+import { MigrationSection } from './MigrationSection'
 
 type SectionKey =
+  | 'migration'
   | 'practice'
   | 'hours'
   | 'notice'
@@ -33,7 +35,7 @@ interface SectionDef {
   key: SectionKey
   label: string
   hint: string
-  group: 'Everyday' | 'Content' | 'Practice information'
+  group: 'Everyday' | 'Content' | 'Practice information' | 'Moving in'
 }
 
 /**
@@ -57,9 +59,11 @@ const SECTIONS: SectionDef[] = [
   { key: 'pages', label: 'Policies and statements', hint: 'Complaints, privacy, accessibility', group: 'Practice information' },
   { key: 'compliance', label: 'Compliance', hint: 'CQC, ICB, data protection, GP earnings', group: 'Practice information' },
   { key: 'advanced', label: 'Advanced settings', hint: 'Colours, analytics, storage', group: 'Practice information' },
+
+  { key: 'migration', label: 'Migration', hint: 'Bring content over from your old website', group: 'Moving in' },
 ]
 
-const GROUPS = ['Everyday', 'Content', 'Practice information'] as const
+const GROUPS = ['Everyday', 'Content', 'Practice information', 'Moving in'] as const
 
 export interface BillingInfo {
   status: 'active' | 'past_due' | 'suspended'
@@ -237,6 +241,10 @@ export function AdminEditor({ site, initialConfig, storage, siteUrl, billing }: 
             {section === 'compliance' && <ComplianceSection site={site} config={config} update={update} />}
             {section === 'advanced' && (
               <AdvancedSection site={site} config={config} update={update} storage={storage} />
+            )}
+
+            {section === 'migration' && (
+              <MigrationSection site={site} config={config} update={update} />
             )}
           </div>
         </div>

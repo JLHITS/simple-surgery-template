@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { Divider, Fieldset, SmallButton, TextInput } from './fields'
 import type { SiteConfig } from '@/lib/config/types'
-import type { ConfigPatch, ExtractResult, Finding } from '@/lib/import/extract'
+import { STATUTORY_WARNING } from '@/lib/import/content'
+import type { ConfigPatch, ExtractResult, Finding, PageFinding } from '@/lib/import/extract'
 
 /**
  * Bringing content across from a practice's existing website.
@@ -55,6 +56,37 @@ function applyPatch(config: SiteConfig, patch: ConfigPatch): SiteConfig {
   return next as unknown as SiteConfig
 }
 
+/**
+ * Puts an imported page's wording where it belongs.
+ *
+ * Three destinations, because the template keeps its pages in three shapes: a
+ * field on `content`, an entry in `pages`, or an entry in `services`. Applied
+ * one page at a time rather than as a whole-array patch, so two selected pages
+ * cannot overwrite each other's array.
+ */
+function applyPage(config: SiteConfig, finding: PageFinding): SiteConfig {
+  if (finding.targetKind === 'contentField') {
+    return {
+      ...config,
+      content: { ...config.content, [finding.targetKey]: finding.markdown },
+    }
+  }
+
+  const list = finding.targetKind === 'page' ? 'pages' : 'services'
+  const items = config[list]
+  const index = items.findIndex((item) => item.slug === finding.targetKey)
+
+  // The page is not in this site's config, so there is nowhere to put it.
+  // Silently doing nothing is right: the alternative is inventing a page the
+  // practice did not ask for.
+  if (index === -1) return config
+
+  const next = [...items]
+  next[index] = { ...next[index], body: finding.markdown }
+
+  return { ...config, [list]: next }
+}
+
 export function MigrationSection({
   site,
   config,
@@ -69,6 +101,7 @@ export function MigrationSection({
   const [message, setMessage] = useState('')
   const [result, setResult] = useState<ExtractResult | null>(null)
   const [chosen, setChosen] = useState<Record<string, boolean>>({})
+  const [chosenPages, setChosenPages] = useState<Record<string, boolean>>({})
   const [applied, setApplied] = useState(false)
 
   async function scan() {
@@ -98,6 +131,14 @@ export function MigrationSection({
       setChosen(
         Object.fromEntries(body.findings.map((f) => [f.id, f.confidence !== 'low'])),
       )
+      // Page wording starts ticked only where the template is not already
+      // doing the work: compliance pages and anything that trips the guidance
+      // checks are left for the practice to turn on deliberately.
+      setChosenPages(
+        Object.fromEntries(
+          body.pageFindings.map((p) => [p.id, !p.statutory && p.issues.length === 0]),
+        ),
+      )
       setStatus('done')
     } catch {
       setStatus('error')
@@ -112,12 +153,18 @@ export function MigrationSection({
     for (const finding of result.findings) {
       if (chosen[finding.id]) next = applyPatch(next, finding.patch)
     }
+    for (const page of result.pageFindings) {
+      if (chosenPages[page.id]) next = applyPage(next, page)
+    }
 
     update(next)
     setApplied(true)
   }
 
-  const selectedCount = result ? result.findings.filter((f) => chosen[f.id]).length : 0
+  const selectedCount = result
+    ? result.findings.filter((f) => chosen[f.id]).length +
+      result.pageFindings.filter((p) => chosenPages[p.id]).length
+    : 0
 
   const groups = result
     ? [...new Set(result.findings.map((f) => f.group))].map((group) => ({
@@ -130,7 +177,8 @@ export function MigrationSection({
     <div className="grid gap-8">
       <p className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-[0.85rem] leading-relaxed text-blue-900">
         Moving from another website? Put your current address in below and we will read what is
-        on it. You choose what to bring across, and nothing changes until you press Save.
+        on it: your details, and the wording of any page this template already has. You choose
+        what to bring across, and nothing changes until you press Save.
       </p>
 
       <Fieldset
@@ -237,6 +285,117 @@ export function MigrationSection({
               </div>
             ))}
 
+            {result.pageFindings.length > 0 && (
+              <div className="grid gap-3">
+                <h3 className="text-[0.8rem] font-semibold uppercase tracking-wide text-zinc-500">
+                  Page wording
+                </h3>
+                <p className="text-[0.85rem] leading-relaxed text-zinc-600">
+                  Wording from your old site, matched to the pages this template already has.
+                  Ticking one <strong>replaces</strong> the wording we supply for that page.
+                </p>
+
+                {result.pageFindings.map((page) => {
+                  const ticked = Boolean(chosenPages[page.id])
+
+                  return (
+                    <div
+                      key={page.id}
+                      className={`rounded-lg border ${
+                        ticked && (page.statutory || page.issues.length)
+                          ? 'border-amber-300 bg-amber-50/40'
+                          : 'border-zinc-200'
+                      }`}
+                    >
+                      <label className="flex cursor-pointer items-start gap-3 p-3 hover:bg-zinc-50">
+                        <input
+                          type="checkbox"
+                          className="mt-1 h-5 w-5 shrink-0 accent-zinc-900"
+                          checked={ticked}
+                          onChange={(e) =>
+                            setChosenPages((c) => ({ ...c, [page.id]: e.target.checked }))
+                          }
+                        />
+                        <span className="min-w-0 flex-1">
+                          <span className="flex flex-wrap items-center gap-2">
+                            <span className="font-semibold text-zinc-900">{page.targetLabel}</span>
+                            <span className="text-[0.75rem] text-zinc-500">
+                              {page.wordCount} words
+                            </span>
+                            {page.statutory && (
+                              <span className="rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[0.7rem] font-medium text-amber-900">
+                                We write this one for you
+                              </span>
+                            )}
+                            {page.issues.length > 0 && (
+                              <span className="rounded border border-red-200 bg-red-50 px-1.5 py-0.5 text-[0.7rem] font-medium text-red-800">
+                                {page.issues.length} wording{' '}
+                                {page.issues.length === 1 ? 'problem' : 'problems'}
+                              </span>
+                            )}
+                          </span>
+                          <span className="mt-1 block text-[0.85rem] leading-relaxed text-zinc-600">
+                            {page.excerpt}...
+                          </span>
+                          <span className="mt-1 block break-all text-[0.75rem] text-zinc-400">
+                            from {page.sourceUrl}
+                          </span>
+                        </span>
+                      </label>
+
+                      {/* The argument for our own wording, made at the moment
+                          somebody chooses to replace it rather than buried in a
+                          notice they read before they had a decision to make. */}
+                      {ticked && page.statutory && (
+                        <div className="border-t border-amber-200 bg-amber-50 p-3 text-[0.85rem] leading-relaxed text-amber-900">
+                          <p className="font-semibold">
+                            You are about to replace a page we keep compliant for you.
+                          </p>
+                          <p className="mt-1.5">{page.caution}</p>
+                          <p className="mt-1.5">{STATUTORY_WARNING}</p>
+                          <p className="mt-1.5">
+                            If you take it anyway, read it line by line before you go live, and
+                            put a date in the diary to review it. It is your practice that is
+                            accountable for what this page says, not your old supplier and not
+                            us.
+                          </p>
+                        </div>
+                      )}
+
+                      {ticked && page.issues.length > 0 && (
+                        <div className="border-t border-red-200 bg-red-50 p-3 text-[0.85rem] leading-relaxed text-red-900">
+                          <p className="font-semibold">
+                            This wording does not follow NHS England&apos;s guidance:
+                          </p>
+                          <ul className="mt-1.5 grid gap-1.5 pl-5">
+                            {page.issues.map((issue) => (
+                              <li key={issue.found} className="list-disc">
+                                <strong>&ldquo;{issue.found}&rdquo;</strong> {issue.problem}
+                              </li>
+                            ))}
+                          </ul>
+                          <p className="mt-1.5">
+                            You can fix these in Page wording after importing. The guidance comes
+                            from user testing with over 160 patients, which is why the supplied
+                            wording avoids them.
+                          </p>
+                        </div>
+                      )}
+
+                      <details className="border-t border-zinc-200 p-3 text-[0.85rem]">
+                        <summary className="cursor-pointer font-medium text-zinc-700">
+                          Read what would be imported
+                        </summary>
+                        <pre className="mt-2 max-h-72 overflow-auto whitespace-pre-wrap rounded bg-zinc-50 p-3 font-sans text-[0.85rem] leading-relaxed text-zinc-700">
+                          {page.markdown}
+                        </pre>
+                      </details>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
             {result.missing.length > 0 && (
               <p className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-[0.85rem] leading-relaxed text-zinc-600">
                 <strong className="text-zinc-900">We could not find:</strong>{' '}
@@ -265,9 +424,10 @@ export function MigrationSection({
                   : 'Nothing selected'}
               </SmallButton>
               <SmallButton
-                onClick={() =>
+                onClick={() => {
                   setChosen(Object.fromEntries(result.findings.map((f) => [f.id, false])))
-                }
+                  setChosenPages(Object.fromEntries(result.pageFindings.map((p) => [p.id, false])))
+                }}
               >
                 Untick everything
               </SmallButton>
@@ -296,9 +456,14 @@ export function MigrationSection({
             PDFs.
           </li>
           <li className="list-disc">
-            Your policies, practice news and page wording are not brought across. Those are
-            yours to write, and the template already gives you a compliant starting point for
-            each one.
+            Practice news, photographs and anything inside a form are not brought across.
+          </li>
+          <li className="list-disc">
+            Page wording is offered, but the pages we write to keep you compliant with NHS
+            England, CQC and the Information Commissioner start unticked. That is the point of
+            the template: those pages are maintained for you as the rules change, and the
+            version on your old site was usually written by your previous supplier for their
+            whole estate rather than by your practice.
           </li>
           <li className="list-disc">
             Staff names are a guess from the text of a page. Photographs and job titles are not

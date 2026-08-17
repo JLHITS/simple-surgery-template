@@ -192,6 +192,26 @@ What it can usually find:
 | Integrated Care Board | The phrase in your page text |
 | Logo | Structured data or an image marked as a logo, on your own domain |
 | Staff names | Guessed from your team page, and flagged as a guess |
+| Page wording | Converted to Markdown, matched to a template page, checked against NHS England guidance |
+
+It also offers **page wording**, matched to the pages this template already has: about,
+appointments, prescriptions, the service pages, patient group, carers, and the compliance pages.
+HTML is converted into the same Markdown subset the admin panel uses, with images, tables and
+forms dropped.
+
+Two rules decide what starts ticked, and both exist to stop the template quietly becoming an
+ordinary website again:
+
+- **Compliance pages start unticked.** Complaints, privacy, accessibility, freedom of
+  information, named GP, GP earnings, the patient charter and practice policies are written here
+  against current guidance and kept current as it changes. The version on the old site was
+  usually written by the outgoing supplier for their whole estate, and is as old as the site
+  being left. Ticking one shows why that is a risk before it is applied.
+- **Anything that trips the NHS England wording rules starts unticked**, with the phrase and the
+  reason shown. "Online consultation" was not understood by 83% of patients tested; "triage" and
+  "clinician" tested badly; supplier product names should not be shown to patients at all. In
+  testing against real Practice365 sites, most imported pages tripped at least one of these,
+  which is the clearest possible statement of what the supplied wording is for.
 
 Three things make this safe to use on a live site:
 

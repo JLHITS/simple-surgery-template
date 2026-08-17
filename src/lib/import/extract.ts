@@ -1,4 +1,5 @@
 import type { OpeningDay, SiteConfig, TeamMember, Weekday } from '@/lib/config/types'
+import { toImportedPage, type ImportedPage, type WordingIssue } from './content'
 import type { CrawledPage } from './crawl'
 import { anchors, jsonLd, ldString, matchTags, meta, ofType, attr, tidy, title, toText } from './html'
 
@@ -41,10 +42,33 @@ export interface Finding {
   patch: ConfigPatch
 }
 
+/** A page's wording, offered for one of the template's pages. */
+export interface PageFinding {
+  id: string
+  /** Where it would go: a content field, an info page slug, or a service slug. */
+  targetKind: 'contentField' | 'page' | 'service'
+  targetKey: string
+  targetLabel: string
+  /** True where the template writes this page to meet a requirement. */
+  statutory: boolean
+  /** The specific risk of importing this one, shown when it is ticked. */
+  caution: string
+  /** Where the imported wording departs from the guidance the template follows. */
+  issues: WordingIssue[]
+  sourceUrl: string
+  sourceTitle: string
+  excerpt: string
+  wordCount: number
+  /** The converted body, in the template's Markdown subset. */
+  markdown: string
+}
+
 export interface ExtractResult {
   siteUrl: string
   pagesRead: { url: string; kind: string }[]
   findings: Finding[]
+  /** Page wording, offered separately from the facts. */
+  pageFindings: PageFinding[]
   /** Things we looked for and could not find, so the UI can say so. */
   missing: string[]
 }
@@ -952,10 +976,51 @@ export function extract(pages: CrawledPage[]): ExtractResult {
     missing.push('staff list')
   }
 
+  /* page wording */
+
+  // One offer per template page. Several pages on a site can match the same
+  // target, and asking a practice to choose between three "About" pages is
+  // worse than picking the fullest one for them.
+  const best = new Map<string, ImportedPage>()
+
+  for (const page of pages) {
+    if (!page.target) continue
+
+    const imported = toImportedPage(page.html, page.url, title(page.html), page.target)
+    if (!imported) continue
+
+    const existing = best.get(page.target.key)
+    if (!existing || imported.wordCount > existing.wordCount) {
+      best.set(page.target.key, imported)
+    }
+  }
+
+  const pageFindings: PageFinding[] = [...best.values()].map(toPageFinding)
+
+  if (!pageFindings.length) missing.push('page wording')
+
   return {
     siteUrl: home.url,
     pagesRead: pages.map((p) => ({ url: p.url, kind: p.kind })),
     findings,
+    pageFindings,
     missing,
+  }
+}
+
+function toPageFinding(imported: ImportedPage): PageFinding {
+  return {
+    id: `page.${imported.target.kind}.${imported.target.key}`,
+    targetKind: imported.target.kind,
+    targetKey: imported.target.key,
+    targetLabel: imported.target.label,
+    statutory: Boolean(imported.target.statutory),
+    caution: imported.target.caution || '',
+    issues: imported.issues,
+    sourceUrl: imported.sourceUrl,
+    sourceTitle: imported.sourceTitle,
+    excerpt: imported.excerpt,
+    wordCount: imported.wordCount,
+    markdown: imported.markdown,
   }
 }

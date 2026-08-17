@@ -1,3 +1,4 @@
+import { targetFor, type PageTarget } from './content'
 import { anchors, tidy } from './html'
 import { fetchPage, normaliseUrl, type FetchedPage } from './fetch'
 
@@ -15,7 +16,17 @@ import { fetchPage, normaliseUrl, type FetchedPage } from './fetch'
  * website should be hammered by a tool that claims to be helping.
  */
 
-const MAX_PAGES = 10
+/**
+ * Pages fetched for facts: name, phone, hours, links.
+ */
+const MAX_FACT_PAGES = 10
+
+/**
+ * Further pages fetched only for their wording, one per template page that
+ * could receive it. Twenty is roughly a full practice site's worth of content
+ * pages, and at a tenth of a second each it is not a burden on their server.
+ */
+const MAX_CONTENT_PAGES = 20
 
 /** URL or link-text fragments worth following, best first. */
 const WANTED: { pattern: RegExp; score: number; kind: PageKind }[] = [
@@ -42,6 +53,13 @@ export type PageKind =
 
 export interface CrawledPage extends FetchedPage {
   kind: PageKind
+  /**
+   * The template page this one's wording could go into, if any.
+   *
+   * A page can be both: the appointments page is read for its online request
+   * link and offered for its prose, and is fetched once for both.
+   */
+  target?: PageTarget
 }
 
 /** Things that are never worth fetching, however they score. */
@@ -101,8 +119,10 @@ export async function crawl(input: string): Promise<CrawledPage[]> {
   const homeUrl = new URL(home.url)
   const pages: CrawledPage[] = [{ ...home, kind: 'home' }]
 
-  const seen = new Set([home.url.replace(/\/$/, '')])
+  const fetched = new Set([home.url.replace(/\/$/, '')])
   const candidates = new Map<string, { score: number; kind: PageKind }>()
+  /** Every same-site page we know about, for matching against template pages. */
+  const known = new Map<string, string>()
 
   const consider = (href: string, text: string) => {
     if (SKIP.test(href)) return
@@ -117,35 +137,69 @@ export async function crawl(input: string): Promise<CrawledPage[]> {
 
     url.hash = ''
     const key = url.toString().replace(/\/$/, '')
-    if (seen.has(key) || candidates.has(key)) return
+    if (fetched.has(key)) return
+
+    if (!known.has(key)) known.set(key, text)
 
     const scored = scoreFor(url.pathname, text)
-    if (scored) candidates.set(key, scored)
+    if (scored && !candidates.has(key)) candidates.set(key, scored)
   }
 
   for (const { href, text } of anchors(home.html, home.url)) consider(href, text)
 
-  // The sitemap catches practices whose navigation is built by script, which is
-  // most of the ones running a modern supplier's template.
-  if (candidates.size < MAX_PAGES) {
-    for (const loc of await sitemapUrls(homeUrl)) consider(loc, '')
-  }
+  // The sitemap is what finds the deeper content pages. A practice's carers
+  // page or PPG page is rarely linked from the home page, and those are
+  // exactly the ones worth offering to bring across.
+  for (const loc of await sitemapUrls(homeUrl)) consider(loc, '')
+
+  /* ----------------------------------------------------------- fact pages */
 
   // One page per kind, best scoring first. Six "meet the team" pages teach us
   // nothing the first one did not.
   const takenKinds = new Set<PageKind>()
-  const ordered: [string, PageKind][] = []
+  const factPages: [string, PageKind][] = []
 
   for (const [url, { kind }] of [...candidates.entries()].sort((a, b) => b[1].score - a[1].score)) {
     if (takenKinds.has(kind)) continue
     takenKinds.add(kind)
-    ordered.push([url, kind])
-    if (ordered.length >= MAX_PAGES - 1) break
+    factPages.push([url, kind])
+    if (factPages.length >= MAX_FACT_PAGES - 1) break
   }
 
-  for (const [url, kind] of ordered) {
+  for (const [url, kind] of factPages) {
     const page = await fetchPage(url)
-    if (page) pages.push({ ...page, kind })
+    if (!page) continue
+    fetched.add(url)
+    pages.push({ ...page, kind, target: targetFor(page.url, known.get(url) || '') ?? undefined })
+  }
+
+  /* -------------------------------------------------------- content pages */
+
+  // One page per template target, so a practice is never asked to choose
+  // between three candidates for the same destination. The first match wins,
+  // and the sitemap is ordered the way the site is.
+  const takenTargets = new Set<string>()
+  for (const page of pages) {
+    if (page.target) takenTargets.add(page.target.key)
+  }
+
+  let contentFetched = 0
+
+  for (const [url, text] of known) {
+    if (contentFetched >= MAX_CONTENT_PAGES) break
+    if (fetched.has(url)) continue
+
+    const target = targetFor(url, text)
+    if (!target || takenTargets.has(target.key)) continue
+
+    takenTargets.add(target.key)
+
+    const page = await fetchPage(url)
+    if (!page) continue
+
+    fetched.add(url)
+    contentFetched += 1
+    pages.push({ ...page, kind: 'services', target })
   }
 
   return pages

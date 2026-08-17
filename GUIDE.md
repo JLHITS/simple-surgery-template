@@ -100,6 +100,8 @@ Replace the demo details with your practice.
 
 **If you already have a website, start with Migration.** Put your current address into the Migration section and it will read your existing site: your name, phone, address, ODS code, opening hours, online service links, CQC link and often your staff list. You tick what to bring across, and nothing is saved until you press Save.
 
+It also offers the wording of any page this template already has. The compliance pages, your complaints procedure, privacy notice, accessibility statement and the rest, start unticked: those are written here against current guidance and kept up to date, and the version on your old site was usually written by your previous supplier rather than by you.
+
 It will not get everything, and it will occasionally get something wrong, so check what it brings you. It saves most of the typing, which is the point. Then carry on below with whatever it missed.
 
 Work through the admin panel in this order:

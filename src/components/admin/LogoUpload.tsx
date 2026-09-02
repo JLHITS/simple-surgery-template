@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react'
 import { SmallButton } from './fields'
+import { useDemoMode } from './DemoMode'
 
 const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || ''
 const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || ''
@@ -44,11 +45,12 @@ export function LogoUpload({
   label?: string
   hint?: string
 }) {
+  const demo = useDemoMode()
   const inputRef = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  const [host, setHost] = useState<'unknown' | 'server' | 'browser' | 'inline'>(
-    CLOUD_NAME && UPLOAD_PRESET ? 'browser' : 'unknown',
+  const [host, setHost] = useState<'unknown' | 'server' | 'browser' | 'inline' | 'demo'>(
+    demo ? 'demo' : CLOUD_NAME && UPLOAD_PRESET ? 'browser' : 'unknown',
   )
 
   /**
@@ -145,6 +147,15 @@ export function LogoUpload({
 
     setBusy(true)
     try {
+      // The demo resizes in the browser and stops there. Both hosted paths end
+      // in a file sitting on somebody's Cloudinary account, and a demo nobody
+      // signed in to has no business putting anything there.
+      if (demo) {
+        setHost('demo')
+        onChange(await resizeInline(file))
+        return
+      }
+
       // Signed server upload first, then an unsigned preset, then inline.
       const hosted = await uploadViaServer(file)
       if (hosted) {
@@ -174,6 +185,7 @@ export function LogoUpload({
     server: 'Hosted on Cloudinary',
     browser: 'Hosted on Cloudinary',
     inline: 'Stored with your site settings',
+    demo: 'Shown here only. Nothing is uploaded',
   }[host]
 
   return (

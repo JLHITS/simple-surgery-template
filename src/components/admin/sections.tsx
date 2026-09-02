@@ -17,6 +17,7 @@ import {
   Toggle,
 } from './fields'
 import { LogoUpload } from './LogoUpload'
+import { useDemoMode } from './DemoMode'
 
 export interface SectionProps {
   /** The practice slug, needed for the tenant-scoped upload endpoint. */
@@ -1362,6 +1363,7 @@ export function AdvancedSection({
   storage,
   site,
 }: SectionProps & { storage: { name: string; configured: boolean; persistent: boolean } }) {
+  const demo = useDemoMode()
   const { advanced, urgent } = config
   const set = (patch: Partial<SiteConfig['advanced']>) =>
     update({ advanced: { ...advanced, ...patch } })
@@ -1581,15 +1583,50 @@ export function AdvancedSection({
           and use it to move to your own hosting whenever you like.
         </p>
         <div>
-          <a
-            href={`/api/${site}/admin/export`}
-            download
-            className="inline-flex min-h-11 items-center rounded-lg border border-zinc-300 px-4 text-[0.9rem] font-semibold text-zinc-900 no-underline hover:bg-zinc-50"
-          >
-            Download my website
-          </a>
+          {demo ? (
+            // Genuinely downloads, because it can: the file is the draft that is
+            // already in the browser. Nothing is worth demonstrating less than a
+            // button that does nothing.
+            <button
+              type="button"
+              onClick={() => downloadConfig(site, config)}
+              className="inline-flex min-h-11 items-center rounded-lg border border-zinc-300 px-4 text-[0.9rem] font-semibold text-zinc-900 hover:bg-zinc-50"
+            >
+              Download my website
+            </button>
+          ) : (
+            <a
+              href={`/api/${site}/admin/export`}
+              download
+              className="inline-flex min-h-11 items-center rounded-lg border border-zinc-300 px-4 text-[0.9rem] font-semibold text-zinc-900 no-underline hover:bg-zinc-50"
+            >
+              Download my website
+            </a>
+          )}
         </div>
       </Fieldset>
     </div>
   )
+}
+
+/**
+ * The export, done in the browser.
+ *
+ * Same file the export endpoint returns, same name, built from the config the
+ * editor is holding rather than from storage. Used by the demo, where there is
+ * no session to authenticate against and nothing saved to read back.
+ */
+function downloadConfig(site: string, config: SiteConfig) {
+  const stamp = new Date().toISOString().slice(0, 10)
+  const blob = new Blob([JSON.stringify(config, null, 2)], {
+    type: 'application/json;charset=utf-8',
+  })
+  const url = URL.createObjectURL(blob)
+
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `${site}-website-${stamp}.json`
+  link.click()
+
+  URL.revokeObjectURL(url)
 }

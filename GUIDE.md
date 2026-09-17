@@ -183,7 +183,13 @@ What to do afterwards, which is almost nothing.
 
 Pull in changes to the template as they are made.
 
-The template gets updates as NHS guidance changes. To take them:
+The template gets updates as NHS guidance changes. Your admin panel tells you when one is out: open **Updates** and it shows your version, the latest one, and what has changed.
+
+To take an update, open your fork on GitHub and press **Sync fork**, then **Update branch**.
+
+Vercel redeploys automatically. Your content is untouched, because it lives in the database rather than in the code.
+
+If you would rather use a terminal, this does the same thing:
 
 ```
 git remote add upstream https://github.com/JLHITS/simple-surgery-template.git
@@ -192,9 +198,9 @@ git merge upstream/main
 git push
 ```
 
-Vercel redeploys automatically. Your content is untouched, because it lives in the database rather than in the code.
+Sometimes an update also brings new recommended wording for a page, because the guidance behind it changed. That appears under **Updates** too, next to your current wording, and nothing on your website changes until you choose it and press Save.
 
-You do not have to do this. A site that never updates keeps working.
+You do not have to do any of this. A site that never updates keeps working.
 
 ### The annual review *(30 minutes a year)*
 

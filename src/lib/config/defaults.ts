@@ -14,6 +14,7 @@ export const SCHEMA_VERSION = 1
 export const defaultConfig: SiteConfig = {
   schemaVersion: SCHEMA_VERSION,
   updatedAt: '2026-01-01T00:00:00.000Z',
+  reviewedUpdates: [],
 
   practice: {
     name: 'Frogmorton Medical Centre',

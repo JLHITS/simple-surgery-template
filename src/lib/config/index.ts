@@ -44,6 +44,22 @@ function migrate(stored: Plain): Plain {
   return stored
 }
 
+/**
+ * Adds any required page the stored copy is missing.
+ *
+ * Pages are an array, so saved content replaces the defaults wholesale and a
+ * required page added in a later template release would otherwise stay missing
+ * until the practice next pressed Save. Publishing these is a contractual
+ * requirement, so it appears straight away, with the recommended wording. Same
+ * rule as the sanitiser, applied on the way out as well as on the way in.
+ */
+function withStatutoryPages(config: SiteConfig): SiteConfig {
+  const missing = defaultConfig.pages.filter(
+    (required) => required.statutory && !config.pages.some((p) => p.slug === required.slug),
+  )
+  return missing.length ? { ...config, pages: [...config.pages, ...missing] } : config
+}
+
 async function load(slug: string): Promise<SiteConfig> {
   try {
     const raw = await readKey(configKey(slug))
@@ -52,7 +68,7 @@ async function load(slug: string): Promise<SiteConfig> {
     const parsed = JSON.parse(raw) as unknown
     if (!isPlainObject(parsed)) return defaultConfig
 
-    return mergeDeep(defaultConfig, migrate(parsed))
+    return withStatutoryPages(mergeDeep(defaultConfig, migrate(parsed)))
   } catch (err) {
     // A broken backend must never take the whole website down. Patients still
     // need the phone number and the opening hours.

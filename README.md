@@ -136,6 +136,12 @@ admin panel  ->  POST /api/admin/save  ->  sanitiser  ->  storage driver
 `src/lib/config/defaults.ts` holds the seed content. Anything saved is deep-merged over it, so
 a template update that adds a setting picks up its default without you touching anything.
 
+Wording is the exception: once a page has been saved, the saved copy wins. When recommended
+wording changes because guidance changed, `src/lib/config/wording-updates.ts` lists it, and the
+**Updates** section of the admin panel shows it next to the practice's own words to take or
+leave. The same section tells a self-hosted copy when a newer version has been published,
+using `CHANGELOG.md`.
+
 Every save passes through `src/lib/config/sanitise.ts` first. Length caps, URL scheme
 allowlisting, slug normalisation and colour validation all happen there. The browser is never
 trusted, and statutory pages cannot be deleted because publishing them is a contractual

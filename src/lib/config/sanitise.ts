@@ -389,6 +389,13 @@ export function sanitiseConfig(input: unknown, fallback: SiteConfig): SiteConfig
   return {
     schemaVersion: fallback.schemaVersion,
     updatedAt: new Date().toISOString(),
+    reviewedUpdates: [
+      ...new Set(
+        arr(source.reviewedUpdates)
+          .map((u) => str(u, '', 100))
+          .filter(Boolean),
+      ),
+    ],
 
     practice: {
       name,

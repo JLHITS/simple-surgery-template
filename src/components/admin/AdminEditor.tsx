@@ -17,6 +17,8 @@ import {
 } from './sections'
 import { MigrationSection } from './MigrationSection'
 import { DemoProvider } from './DemoMode'
+import { UpdatesSection, type VersionInfo } from './UpdatesSection'
+import { pendingWordingUpdates } from '@/lib/config/wording-updates'
 
 type SectionKey =
   | 'migration'
@@ -31,6 +33,7 @@ type SectionKey =
   | 'news'
   | 'compliance'
   | 'advanced'
+  | 'updates'
 
 interface SectionDef {
   key: SectionKey
@@ -60,6 +63,7 @@ const SECTIONS: SectionDef[] = [
   { key: 'pages', label: 'Policies and statements', hint: 'Complaints, privacy, accessibility', group: 'Practice information' },
   { key: 'compliance', label: 'Compliance', hint: 'CQC, ICB, data protection, GP earnings', group: 'Practice information' },
   { key: 'advanced', label: 'Advanced settings', hint: 'Colours, analytics, storage', group: 'Practice information' },
+  { key: 'updates', label: 'Updates', hint: 'New recommended wording, and new versions of the website', group: 'Practice information' },
 
   { key: 'migration', label: 'Migration', hint: 'Bring content over from your old website', group: 'Moving in' },
 ]
@@ -105,6 +109,26 @@ export function AdminEditor({
   const [demoSaved, setDemoSaved] = useState(false)
 
   const dirty = useMemo(() => JSON.stringify(config) !== saved, [config, saved])
+  const pendingWording = useMemo(() => pendingWordingUpdates(config).length, [config])
+
+  // Asked once per visit. The server caches the answer, so this is cheap, and it
+  // never blocks the editor: until it answers the Updates section says so.
+  const [version, setVersion] = useState<VersionInfo | null>(null)
+  useEffect(() => {
+    if (demo) return
+    let cancelled = false
+    fetch(`/api/${site}/admin/version`)
+      .then((res) => (res.ok ? (res.json() as Promise<VersionInfo>) : null))
+      .then((info) => {
+        if (!cancelled && info) setVersion(info)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [site, demo])
+  const newVersion =
+    version?.mode === 'self-hosted' && !version.isUpstream && (version.newer?.length ?? 0) > 0
 
   const update = useCallback((patch: Partial<SiteConfig>) => {
     setConfig((current) => ({ ...current, ...patch }))
@@ -144,7 +168,11 @@ export function AdminEditor({
         body: JSON.stringify(config),
       })
 
-      const body = (await res.json()) as { error?: string; updatedAt?: string }
+      const body = (await res.json()) as {
+        error?: string
+        updatedAt?: string
+        reviewedUpdates?: string[]
+      }
 
       if (!res.ok) {
         setStatus('error')
@@ -152,7 +180,18 @@ export function AdminEditor({
         return
       }
 
-      setSaved(JSON.stringify(config))
+      // The server can record wording updates as reviewed on the practice's
+      // behalf, so what was saved is not quite what was sent.
+      const reviewed = body.reviewedUpdates
+      const stored = reviewed ? { ...config, reviewedUpdates: reviewed } : config
+      if (reviewed) {
+        // Functional, so an edit made while the save was in flight survives.
+        setConfig((current) => ({
+          ...current,
+          reviewedUpdates: [...new Set([...reviewed, ...current.reviewedUpdates])],
+        }))
+      }
+      setSaved(JSON.stringify(stored))
       setStatus('saved')
       setMessage('Your changes are live.')
     } catch {
@@ -257,6 +296,16 @@ export function AdminEditor({
                           }`}
                         >
                           {item.label}
+                          {item.key === 'updates' && (pendingWording > 0 || newVersion) && (
+                            <span
+                              className={`ml-2 inline-flex min-w-5 items-center justify-center rounded-full px-1.5 text-[0.7rem] font-bold ${
+                                section === item.key ? 'bg-white text-zinc-900' : 'bg-blue-600 text-white'
+                              }`}
+                            >
+                              {pendingWording > 0 ? pendingWording : 'New'}
+                              <span className="sr-only"> waiting for you</span>
+                            </span>
+                          )}
                         </button>
                       </li>
                     ))}
@@ -268,6 +317,29 @@ export function AdminEditor({
 
           {/* ------------------------------------------------------- editor */}
           <div>
+            {section !== 'updates' && pendingWording > 0 && (
+              <div className="mb-6 flex flex-wrap items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-[0.85rem] text-blue-900">
+                <p className="min-w-0 flex-1">
+                  <span className="font-semibold">
+                    {pendingWording === 1
+                      ? 'Some recommended wording has changed.'
+                      : `${pendingWording} pieces of recommended wording have changed.`}
+                  </span>{' '}
+                  NHS guidance has moved on. Have a look and choose whether to use it.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSection('updates')
+                    window.scrollTo({ top: 0, behavior: 'smooth' })
+                  }}
+                  className="inline-flex min-h-10 items-center rounded-lg bg-blue-700 px-3 text-[0.85rem] font-semibold text-white hover:bg-blue-800"
+                >
+                  Review
+                </button>
+              </div>
+            )}
+
             <div className="mb-6">
               <h1 className="text-2xl font-bold tracking-tight text-zinc-900">{current.label}</h1>
               <p className="mt-1 text-[0.9rem] text-zinc-500">{current.hint}</p>
@@ -286,6 +358,15 @@ export function AdminEditor({
               {section === 'compliance' && <ComplianceSection site={site} config={config} update={update} />}
               {section === 'advanced' && (
                 <AdvancedSection site={site} config={config} update={update} storage={storage} />
+              )}
+              {section === 'updates' && (
+                <UpdatesSection
+                  site={site}
+                  config={config}
+                  update={update}
+                  version={version}
+                  demo={demo}
+                />
               )}
 
               {section === 'migration' &&

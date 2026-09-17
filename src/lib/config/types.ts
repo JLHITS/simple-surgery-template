@@ -136,6 +136,11 @@ export interface SiteConfig {
   schemaVersion: number
   /** ISO timestamp of the last admin save. Displayed in the footer. */
   updatedAt: string
+  /**
+   * Ids of recommended wording updates this practice has already dealt with,
+   * by taking the new wording or keeping their own. See wording-updates.ts.
+   */
+  reviewedUpdates: string[]
 
   practice: {
     name: string

@@ -5,7 +5,8 @@ import { defaultConfig, saveSiteConfig } from '@/lib/config'
 import type { SiteConfig } from '@/lib/config/types'
 import { sanitiseConfig } from '@/lib/config/sanitise'
 import { siteBase } from '@/lib/routing'
-import { configKey, normaliseSlug } from '@/lib/storage'
+import { settleUnseenUpdates } from '@/lib/config/wording-updates'
+import { configKey, normaliseSlug, readKey } from '@/lib/storage'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -52,6 +53,25 @@ export async function POST(request: Request, { params }: Context) {
     )
   }
 
+  // Reviewed wording updates only ever accumulate. A browser tab opened before
+  // an earlier save does not know what that save recorded, and must not make an
+  // update the practice already dealt with come back. If the stored copy cannot
+  // be read, the save still goes ahead: this is bookkeeping, not the content.
+  try {
+    const raw = await readKey(configKey(site), { fresh: true })
+    const stored = raw ? (JSON.parse(raw) as unknown) : null
+    const earlier = (stored as { reviewedUpdates?: unknown } | null)?.reviewedUpdates
+    if (Array.isArray(earlier)) {
+      const extra = earlier.filter(
+        (id): id is string => typeof id === 'string' && !clean.reviewedUpdates.includes(id),
+      )
+      if (extra.length) clean = { ...clean, reviewedUpdates: [...clean.reviewedUpdates, ...extra] }
+    }
+    clean = settleUnseenUpdates(stored, clean)
+  } catch (err) {
+    console.error(`[simple-surgery] could not read ${site} before saving:`, err)
+  }
+
   try {
     await saveSiteConfig(site, clean)
   } catch (err) {
@@ -67,5 +87,9 @@ export async function POST(request: Request, { params }: Context) {
   revalidateTag(`store:${configKey(site)}`, { expire: 0 })
   revalidatePath(`${siteBase(site)}/`, 'layout')
 
-  return NextResponse.json({ ok: true, updatedAt: clean.updatedAt })
+  return NextResponse.json({
+    ok: true,
+    updatedAt: clean.updatedAt,
+    reviewedUpdates: clean.reviewedUpdates,
+  })
 }

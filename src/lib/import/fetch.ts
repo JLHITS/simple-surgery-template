@@ -32,6 +32,55 @@ export interface FetchedPage {
 export class FetchRefused extends Error {}
 
 /**
+ * The site answered with a bot check instead of its page.
+ *
+ * Some practice website suppliers put their sites behind a firewall that
+ * challenges requests from data centres, which is where any server, ours
+ * included, makes them from. The challenge page is a perfectly good 200 or 202
+ * response, so without this it was read as the practice's content: the import
+ * "found" a practice called "JavaScript is disabled" and nothing else, across
+ * every page it read. Saying plainly what happened is the only honest result.
+ */
+export class FetchBlocked extends FetchRefused {
+  /** The address that was blocked, after any redirects. */
+  readonly url: string
+  /** Pages worth saving by hand instead, when the sitemap could still be read. */
+  suggestions: string[] = []
+
+  constructor(url: URL) {
+    super(
+      `${url.hostname} has a security check that stops websites being read automatically, so all we could see was the check itself, not your pages. Nothing has been brought across yet. Your pages still open normally in your own browser, so you can save them from there and add them below.`,
+    )
+    this.url = url.toString()
+  }
+}
+
+/** True when a page someone saved or pasted is a bot check, not their content. */
+export function isBotChallengeHtml(html: string): boolean {
+  return html.length <= CHALLENGE_MAX_BYTES && CHALLENGE_MARKERS.some((m) => m.test(html))
+}
+
+/** Bot checks are a few kilobytes. A real practice home page is far larger. */
+const CHALLENGE_MAX_BYTES = 60_000
+
+const CHALLENGE_MARKERS = [
+  /awswaf|aws-waf-token|AwsWafIntegration/i, // AWS WAF challenge and CAPTCHA
+  /challenge-platform|cf-chl-|<title>\s*Just a moment\.\.\.\s*<\/title>/i, // Cloudflare
+  /verify\s+that\s+you(?:'|’|&#39;)?re\s+not\s+a\s+robot/i,
+  /_Incapsula_Resource|sgcaptcha|DDoS protection by/i, // Imperva, SiteGround, generic
+]
+
+function isBotChallenge(res: Response, html: string | null): boolean {
+  // Explicit signals from the firewall itself, whatever the status code.
+  const waf = (res.headers.get('x-amzn-waf-action') || '').toLowerCase()
+  if (waf === 'challenge' || waf === 'captcha') return true
+  if ((res.headers.get('cf-mitigated') || '').toLowerCase() === 'challenge') return true
+
+  if (html === null || html.length > CHALLENGE_MAX_BYTES) return false
+  return CHALLENGE_MARKERS.some((marker) => marker.test(html))
+}
+
+/**
  * True for anything that must never be reached from the server.
  *
  * Loopback, private ranges, link-local (which is where cloud metadata lives),
@@ -181,7 +230,12 @@ export async function fetchPage(target: string | URL): Promise<FetchedPage | nul
       continue
     }
 
-    if (!res.ok) return null
+    if (!res.ok) {
+      // A refusal that is really a bot check deserves a clear explanation
+      // rather than looking like a page that does not exist.
+      if (isBotChallenge(res, null)) throw new FetchBlocked(url)
+      return null
+    }
 
     const type = res.headers.get('content-type') || ''
     if (type && !/text\/html|application\/xhtml|text\/xml|application\/xml/i.test(type)) {
@@ -196,7 +250,10 @@ export async function fetchPage(target: string | URL): Promise<FetchedPage | nul
     if (!buffer) return null
     if (buffer.byteLength > MAX_BYTES) return null
 
-    return { url: url.toString(), html: new TextDecoder('utf-8').decode(buffer) }
+    const html = new TextDecoder('utf-8').decode(buffer)
+    if (isBotChallenge(res, html)) throw new FetchBlocked(url)
+
+    return { url: url.toString(), html }
   }
 
   return null

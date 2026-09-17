@@ -231,6 +231,14 @@ people, not for machines. Check the opening hours and the phone number before yo
 are the two things a patient acts on immediately. Policies, page wording and practice news are
 not imported at all, because the template already ships compliant wording for those.
 
+**When the old site will not let a server read it.** Some suppliers put their sites behind a
+firewall that challenges requests from data centres, which is where any server runs. The
+challenge page is recognised rather than imported, and the panel switches to **Add pages from
+your own browser**: it lists the pages it would have read (from the sitemap, which firewalls
+usually leave open), the practice saves each one from their browser, where the site opens
+normally, and drops the files in, or pastes the page source. Those pages go through exactly
+the same extraction and review. See `src/lib/import/manual.ts`.
+
 The fetcher refuses private and reserved addresses, checks every redirect hop against the
 resolved IP rather than the hostname, caps size and time, and is behind the admin password. An
 endpoint that fetches arbitrary URLs is a server side request forgery risk, and it is treated as

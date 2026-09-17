@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server'
 import { isAuthenticated } from '@/lib/auth'
 import { crawl } from '@/lib/import/crawl'
 import { extract } from '@/lib/import/extract'
-import { FetchRefused, normaliseUrl } from '@/lib/import/fetch'
+import { FetchBlocked, FetchRefused, normaliseUrl } from '@/lib/import/fetch'
+import { pagesFromUploads, type UploadedPage } from '@/lib/import/manual'
 import { normaliseSlug } from '@/lib/storage'
 
 export const runtime = 'nodejs'
@@ -22,6 +23,13 @@ export const dynamic = 'force-dynamic'
  * for scanning other people's networks. `lib/import/fetch` blocks private
  * addresses; this is the second lock on the same door.
  */
+
+/**
+ * Saved pages arrive in the request body. Vercel refuses bodies over 4.5MB
+ * before this code runs, and the browser strips scripts and styles first, so
+ * this is a backstop rather than the real limit.
+ */
+const MAX_BODY = 4_500_000
 
 /** One scan at a time per practice, and not more than a few a minute. */
 const recent = new Map<string, number[]>()
@@ -55,14 +63,60 @@ export async function POST(request: Request, { params }: Context) {
     )
   }
 
-  let body: { url?: unknown }
+  const raw = await request.text()
+  if (raw.length > MAX_BODY) {
+    return NextResponse.json(
+      { error: 'Those pages are too large to send together. Try adding fewer at a time.' },
+      { status: 413 },
+    )
+  }
+
+  let body: { url?: unknown; pages?: unknown }
   try {
-    body = (await request.json()) as { url?: unknown }
+    body = JSON.parse(raw) as { url?: unknown; pages?: unknown }
   } catch {
     return NextResponse.json({ error: 'Could not read that.' }, { status: 400 })
   }
 
   const input = typeof body.url === 'string' ? body.url : ''
+
+  // Pages the practice saved from their own browser, for sites that will not
+  // let a server read them. Nothing is fetched on this path.
+  if (Array.isArray(body.pages)) {
+    try {
+      const uploads: UploadedPage[] = body.pages
+        .filter((p): p is Record<string, unknown> => typeof p === 'object' && p !== null)
+        .map((p) => ({
+          name: typeof p.name === 'string' ? p.name.slice(0, 200) : 'Page',
+          html: typeof p.html === 'string' ? p.html : '',
+          url: typeof p.url === 'string' ? p.url.slice(0, 2000) : undefined,
+        }))
+
+      const { pages, challenges } = pagesFromUploads(input, uploads)
+
+      if (!pages.length) {
+        return NextResponse.json(
+          {
+            error: challenges.length
+              ? 'Every page you added is the security check rather than your page. Open the page, wait until your practice website is showing, then save it again.'
+              : 'We could not read any of those pages. Save them as "Webpage, HTML only" and try again.',
+          },
+          { status: 422 },
+        )
+      }
+
+      return NextResponse.json({ ...extract(pages), skipped: challenges })
+    } catch (err) {
+      if (err instanceof FetchRefused) {
+        return NextResponse.json({ error: err.message }, { status: 400 })
+      }
+      console.error(`[simple-surgery] manual import failed for ${site}:`, err)
+      return NextResponse.json(
+        { error: 'Something went wrong reading those pages. Try again in a moment.' },
+        { status: 500 },
+      )
+    }
+  }
 
   let target: URL
   try {
@@ -88,6 +142,12 @@ export async function POST(request: Request, { params }: Context) {
 
     return NextResponse.json(extract(pages))
   } catch (err) {
+    if (err instanceof FetchBlocked) {
+      return NextResponse.json(
+        { error: err.message, blocked: true, suggestions: err.suggestions },
+        { status: 422 },
+      )
+    }
     if (err instanceof FetchRefused) {
       return NextResponse.json({ error: err.message }, { status: 400 })
     }

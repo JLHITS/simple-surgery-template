@@ -5,6 +5,7 @@ import { Divider, Fieldset, SmallButton, TextInput } from './fields'
 import type { SiteConfig } from '@/lib/config/types'
 import { STATUTORY_WARNING } from '@/lib/import/content'
 import type { ConfigPatch, ExtractResult, Finding, PageFinding } from '@/lib/import/extract'
+import { SavedPagesImport, type SavedPage } from './SavedPagesImport'
 
 /**
  * Bringing content across from a practice's existing website.
@@ -103,28 +104,62 @@ export function MigrationSection({
   const [chosen, setChosen] = useState<Record<string, boolean>>({})
   const [chosenPages, setChosenPages] = useState<Record<string, boolean>>({})
   const [applied, setApplied] = useState(false)
+  /** Set when the site put a bot check in front of us, with the pages to save instead. */
+  const [blocked, setBlocked] = useState<{ suggestions: string[] } | null>(null)
+  const [manualOpen, setManualOpen] = useState(false)
+  const [reading, setReading] = useState<'site' | 'saved'>('site')
+  const [skipped, setSkipped] = useState<string[]>([])
 
   async function scan() {
+    setReading('site')
+    await read({ url }, 'We could not read that website.')
+  }
+
+  async function readSaved(pages: SavedPage[]) {
+    setReading('saved')
+    await read(
+      { url, pages: pages.map(({ name, html, url: pageUrl }) => ({ name, html, url: pageUrl })) },
+      'We could not read those pages.',
+    )
+  }
+
+  async function read(payload: object, fallbackError: string) {
     setStatus('scanning')
     setMessage('')
     setResult(null)
     setApplied(false)
+    setSkipped([])
 
     try {
       const res = await fetch(`/api/${site}/admin/import`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify(payload),
       })
 
-      const body = (await res.json()) as ExtractResult & { error?: string }
+      const body = (await res.json().catch(() => ({}))) as ExtractResult & {
+        error?: string
+        blocked?: boolean
+        suggestions?: string[]
+        skipped?: string[]
+      }
 
       if (!res.ok) {
         setStatus('error')
-        setMessage(body.error || 'We could not read that website.')
+        setMessage(
+          body.error ||
+            (res.status === 413
+              ? 'Those pages are too large to send together. Try adding fewer at a time.'
+              : fallbackError),
+        )
+        if (body.blocked) {
+          setBlocked({ suggestions: body.suggestions ?? [] })
+          setManualOpen(true)
+        }
         return
       }
 
+      setSkipped(body.skipped ?? [])
       setResult(body)
       // Anything we are confident about starts ticked. Guesses do not, because
       // the practice should have to look at those before taking them.
@@ -195,16 +230,16 @@ export function MigrationSection({
 
         <div className="flex flex-wrap items-center gap-3">
           <SmallButton tone="primary" onClick={scan} disabled={status === 'scanning' || !url.trim()}>
-            {status === 'scanning' ? 'Reading your website...' : 'Read my website'}
+            {status === 'scanning' && reading === 'site' ? 'Reading your website...' : 'Read my website'}
           </SmallButton>
-          {status === 'scanning' && (
+          {status === 'scanning' && reading === 'site' && (
             <span className="text-[0.85rem] text-zinc-500">
               This takes up to a minute. We read a handful of pages, not the whole site.
             </span>
           )}
         </div>
 
-        {status === 'error' && (
+        {status === 'error' && reading === 'site' && (
           <p
             role="alert"
             className="rounded-lg border border-red-200 bg-red-50 p-3 text-[0.85rem] text-red-700"
@@ -212,7 +247,32 @@ export function MigrationSection({
             {message}
           </p>
         )}
+
+        {!manualOpen && (
+          <p className="text-[0.85rem] text-zinc-600">
+            <button
+              type="button"
+              onClick={() => setManualOpen(true)}
+              className="font-medium text-zinc-900 underline underline-offset-2"
+            >
+              Cannot read your website? Add its pages yourself
+            </button>
+          </p>
+        )}
       </Fieldset>
+
+      {manualOpen && (
+        <>
+          <Divider />
+          <SavedPagesImport
+            siteAddress={url}
+            suggestions={blocked?.suggestions ?? []}
+            busy={status === 'scanning'}
+            error={status === 'error' && reading === 'saved' ? message : ''}
+            onRead={readSaved}
+          />
+        </>
+      )}
 
       {result && (
         <>
@@ -238,6 +298,18 @@ export function MigrationSection({
                 Those are the two things a patient acts on immediately.
               </p>
             </div>
+
+            {skipped.length > 0 && (
+              <p className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-[0.85rem] leading-relaxed text-zinc-600">
+                <strong className="text-zinc-900">
+                  {skipped.length === 1 ? 'One page was' : `${skipped.length} pages were`} the
+                  security check, not your website, so we left{' '}
+                  {skipped.length === 1 ? 'it' : 'them'} out:
+                </strong>{' '}
+                {skipped.join(', ')}. Open {skipped.length === 1 ? 'it' : 'them'} again, wait for
+                your page to appear, and save again.
+              </p>
+            )}
 
             {result.findings.length === 0 && (
               <p className="text-[0.9rem] text-zinc-600">

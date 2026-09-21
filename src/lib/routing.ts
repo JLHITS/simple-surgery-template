@@ -23,3 +23,33 @@ export function sitePath(base: string, path: string): string {
   if (path === '/') return base || '/'
   return `${base}${path}`
 }
+
+/**
+ * Where this practice's website actually is, as a link a browser can follow.
+ *
+ * The admin panel's "View website" button used to send everyone to
+ * `advanced.siteUrl`, which is a free text field the practice fills in and
+ * which, until a practice touches it, comes from the template's own defaults.
+ * On a hosted site that meant every practice was shown the demo.
+ *
+ * So the tenant record wins. A practice we host lives at their own domain once
+ * it is pointed at us, and at `/their-code` until then, whatever anyone has
+ * typed into the settings. Only a self-hosted deployment, which has no tenant
+ * record and no slug in its URLs, has to be told its own address.
+ */
+export function liveSiteUrl(input: {
+  slug: string
+  customDomain?: string | null
+  configuredUrl?: string | null
+}): string {
+  const domain = (input.customDomain || '')
+    .trim()
+    .replace(/^https?:\/\//i, '')
+    .replace(/\/+$/, '')
+  if (domain) return `https://${domain}`
+
+  if (!singleTenantSlug()) return siteBase(input.slug) || '/'
+
+  const configured = (input.configuredUrl || '').trim()
+  return /^https?:\/\//i.test(configured) ? configured.replace(/\/+$/, '') : '/'
+}

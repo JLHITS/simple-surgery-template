@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import { ButtonLink, Callout, PageHeader } from '@/components/ui'
 import { getSiteConfig } from '@/lib/config'
 import { formatDate } from '@/lib/hours'
+import { practiceName } from '@/lib/practice'
 import { siteBase } from '@/lib/routing'
 import { markdownToPlainText, renderMarkdown } from '@/lib/markdown'
 
@@ -88,7 +89,7 @@ export default async function AboutSubPage({ params }: Props) {
               </strong>
             </p>
             <p>
-              {practice.name} is committed to making its website accessible, in accordance with
+              {practiceName(practice)} is committed to making its website accessible, in accordance with
               the Public Sector Bodies (Websites and Mobile Applications) (No. 2) Accessibility
               Regulations 2018.
             </p>
@@ -275,20 +276,36 @@ export default async function AboutSubPage({ params }: Props) {
           </div>
         )}
 
+        {/*
+          Whichever of the two the practice has published. A site that has
+          neither yet still has to tell people how to report a problem, so it
+          points at reception rather than at an empty mailto: link.
+        */}
         {slug === 'accessibility' && (
           <div className="ss-prose mt-8">
             <Callout tone="info" title="Tell us about a problem">
-              <p>
-                Email{' '}
-                <a href={`mailto:${practice.email}`} className="ss-link">
-                  {practice.email}
-                </a>{' '}
-                or call{' '}
-                <a href={`tel:${practice.phone.replace(/\s+/g, '')}`} className="ss-link">
-                  {practice.phone}
-                </a>
-                .
-              </p>
+              {practice.email || practice.phone ? (
+                <p>
+                  {practice.email && (
+                    <>
+                      Email{' '}
+                      <a href={`mailto:${practice.email}`} className="ss-link">
+                        {practice.email}
+                      </a>
+                    </>
+                  )}
+                  {practice.email && practice.phone && ' or call '}
+                  {!practice.email && practice.phone && 'Call '}
+                  {practice.phone && (
+                    <a href={`tel:${practice.phone.replace(/\s+/g, '')}`} className="ss-link">
+                      {practice.phone}
+                    </a>
+                  )}
+                  .
+                </p>
+              ) : (
+                <p>Please tell reception, and we will put it right.</p>
+              )}
             </Callout>
           </div>
         )}
@@ -345,26 +362,50 @@ export default async function AboutSubPage({ params }: Props) {
           </div>
         )}
 
-        {slug === 'gp-earnings' && (
+        {/*
+          The figures, once the practice has published them. Until then the
+          page still exists, still explains the requirement, and says plainly
+          that this year's declaration is not up yet. Printing an empty pound
+          sign and a blank year would read as a declaration of nothing, which
+          is worse than saying so.
+        */}
+        {slug === 'gp-earnings' && !compliance.gpEarningsAmount && (
+          <p className="mt-8 max-w-2xl rounded-lg border border-nhs-grey-4 bg-nhs-grey-5 p-5">
+            We have not published our declaration for the current financial year yet. Ask at
+            reception if you would like the figures before they appear here.
+          </p>
+        )}
+
+        {slug === 'gp-earnings' && compliance.gpEarningsAmount && (
           <div className="mt-8 max-w-2xl">
-            <h2>Declaration for {compliance.gpEarningsYear}</h2>
+            <h2>
+              {compliance.gpEarningsYear
+                ? `Declaration for ${compliance.gpEarningsYear}`
+                : 'Declaration'}
+            </h2>
             <dl className="mt-4 divide-y divide-nhs-grey-4 border-y border-nhs-grey-4">
               <div className="flex flex-wrap justify-between gap-x-6 gap-y-1 py-3">
                 <dt className="font-semibold">Average pay before tax and National Insurance</dt>
                 <dd className="text-lg font-bold">{compliance.gpEarningsAmount}</dd>
               </div>
-              <div className="flex flex-wrap justify-between gap-x-6 gap-y-1 py-3">
-                <dt className="font-semibold">Full time GPs</dt>
-                <dd>{compliance.gpEarningsFullTime}</dd>
-              </div>
-              <div className="flex flex-wrap justify-between gap-x-6 gap-y-1 py-3">
-                <dt className="font-semibold">Part time GPs</dt>
-                <dd>{compliance.gpEarningsPartTime}</dd>
-              </div>
-              <div className="flex flex-wrap justify-between gap-x-6 gap-y-1 py-3">
-                <dt className="font-semibold">Locum GPs (6 months or more)</dt>
-                <dd>{compliance.gpEarningsLocum}</dd>
-              </div>
+              {compliance.gpEarningsFullTime && (
+                <div className="flex flex-wrap justify-between gap-x-6 gap-y-1 py-3">
+                  <dt className="font-semibold">Full time GPs</dt>
+                  <dd>{compliance.gpEarningsFullTime}</dd>
+                </div>
+              )}
+              {compliance.gpEarningsPartTime && (
+                <div className="flex flex-wrap justify-between gap-x-6 gap-y-1 py-3">
+                  <dt className="font-semibold">Part time GPs</dt>
+                  <dd>{compliance.gpEarningsPartTime}</dd>
+                </div>
+              )}
+              {compliance.gpEarningsLocum && (
+                <div className="flex flex-wrap justify-between gap-x-6 gap-y-1 py-3">
+                  <dt className="font-semibold">Locum GPs (6 months or more)</dt>
+                  <dd>{compliance.gpEarningsLocum}</dd>
+                </div>
+              )}
             </dl>
             {compliance.gpEarningsStatement && (
               <p className="mt-4 text-[0.9rem] text-nhs-grey-1">

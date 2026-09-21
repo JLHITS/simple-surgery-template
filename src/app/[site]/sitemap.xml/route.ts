@@ -19,7 +19,7 @@ interface Context {
  * `theirsurgery.nhs.uk/sitemap.xml` onto this, so search engines see a sitemap
  * at the root of their domain, which is what they expect.
  */
-export async function GET(_request: Request, { params }: Context) {
+export async function GET(request: Request, { params }: Context) {
   const { site } = await params
   const single = singleTenantSlug()
 
@@ -32,11 +32,15 @@ export async function GET(_request: Request, { params }: Context) {
   const tenant = single ? null : await getTenant(site)
 
   // Prefer their own domain once it is live, so search engines index the
-  // address patients will actually see.
+  // address patients will actually see. Failing that the address this request
+  // arrived on, which is right for a hosted practice on the platform domain
+  // and for a self-hoster who never filled the setting in. `siteUrl` is only
+  // consulted for a single tenant deployment, because on a hosted site it is
+  // a field the practice fills in and may well hold their old website.
   const origin = (
     tenant?.customDomain
       ? `https://${tenant.customDomain}`
-      : config.advanced.siteUrl || 'http://localhost:3001'
+      : (single && config.advanced.siteUrl) || new URL(request.url).origin
   ).replace(/\/+$/, '')
 
   const base = tenant?.customDomain ? '' : siteBase(site)

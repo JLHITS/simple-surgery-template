@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { getSiteConfig } from '@/lib/config'
+import { practiceDescription, practiceName, practiceStrapline, practiceTitle } from '@/lib/practice'
 import { siteBase } from '@/lib/routing'
 import { getTenant, singleTenantSlug } from '@/lib/tenant'
 
@@ -33,15 +34,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     metadataBase: origin ? new URL(origin) : undefined,
     title: {
-      default: `${practice.name} | ${practice.strapline}`,
-      template: `%s | ${practice.name}`,
+      default: practiceTitle(practice),
+      template: `%s | ${practiceName(practice)}`,
     },
-    description: `${practice.name} is an NHS GP surgery in ${practice.town}. Request an appointment, order a repeat prescription, and find our opening hours and contact details.`,
+    description: practiceDescription(practice),
     manifest: `${siteBase(site)}/manifest.webmanifest`,
     openGraph: {
       type: 'website',
-      siteName: practice.name,
-      title: `${practice.name} | ${practice.strapline}`,
+      siteName: practiceName(practice),
+      title: practiceTitle(practice),
       locale: 'en_GB',
     },
     robots: { index: true, follow: true },

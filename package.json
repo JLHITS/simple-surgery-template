@@ -9,6 +9,8 @@
     "start": "next start --port 3001",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts",
+    "test:config": "tsx --test tests/config.test.ts",
     "test:import": "tsx --test tests/import.test.ts",
     "test:import:live": "tsx scripts/check-import.ts",
     "hash-password": "node scripts/hash-password.mjs"

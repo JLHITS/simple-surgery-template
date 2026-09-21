@@ -8,6 +8,23 @@ Anything you have to do yourself is listed under **Action needed**.
 
 ## Unreleased
 
+- **Your new website no longer starts with the demo practice's details in it.** The example
+  content we use for the demo surgery, including its staff list, address, opening notice and
+  CQC rating, used to double as the starting point for every new site. Anything you had not
+  yet edited showed those details as though they were yours. New sites now start blank in
+  those places, and any demo details still sitting in an existing site are removed
+  automatically the next time it loads. Anything you have typed yourself is left alone.
+- **Nothing is claimed on your behalf.** CQC rating, ICO registration number and the GP
+  earnings figures are no longer filled in with example values. Until you enter your own, the
+  GP earnings page says the declaration has not been published yet rather than showing a
+  figure nobody at the practice has checked. The wording and structure of every page is
+  unchanged.
+- **"View website" in the admin panel now opens your website.** It was sending everyone to the
+  demo site. It now goes to your own address: your domain once it is pointed at us, and your
+  practice page until then. Your sitemap no longer points at the demo either.
+- **Clearer news settings.** The two boxes under News read as the same question. They now say
+  which page each one controls.
+
 ## 1.1.0 - 2026-09-21
 
 - **Automatic migration from Practice365 and other WordPress sites.** When the old site shows

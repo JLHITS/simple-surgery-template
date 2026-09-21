@@ -7,6 +7,7 @@ import { NoticeBanner } from '@/components/NoticeBanner'
 import { OpenNow } from '@/components/OpenNow'
 import { UrgentHelp } from '@/components/UrgentHelp'
 import { getSiteConfig } from '@/lib/config'
+import { practiceName, practiceStrapline } from '@/lib/practice'
 import { siteBase } from '@/lib/routing'
 import { getNationalNews } from '@/lib/news'
 
@@ -43,9 +44,9 @@ export default async function HomePage({ params }: Props) {
       {/* ------------------------------------------------------------ hero */}
       <div className="ss-container pb-2 pt-10 sm:pt-14">
         <p className="text-sm font-bold uppercase tracking-wider text-nhs-grey-1">
-          {practice.strapline}
+          {practiceStrapline(practice)}
         </p>
-        <h1 className="mt-2 max-w-3xl">{practice.name}</h1>
+        <h1 className="mt-2 max-w-3xl">{practiceName(practice)}</h1>
 
         <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2">
           <OpenNow days={hours.days} closures={hours.closures} />

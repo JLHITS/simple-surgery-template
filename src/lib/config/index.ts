@@ -1,47 +1,40 @@
 import { cache } from 'react'
+import { isDemoContentFor } from '@/lib/demo'
 import { configKey, readKey, writeKey } from '@/lib/storage'
 import { defaultConfig, SCHEMA_VERSION } from './defaults'
+import { demoConfig, stripDemoContent } from './demo-content'
+import { isPlainObject, mergeDeep } from './merge'
 import type { SiteConfig } from './types'
 
 type Plain = Record<string, unknown>
 
-function isPlainObject(value: unknown): value is Plain {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
-
 /**
- * Deep merges saved content over the defaults.
+ * What this practice's unedited site looks like.
  *
- * Arrays replace wholesale rather than merging element by element, because a
- * practice that deletes a team member means it. Objects merge key by key, so a
- * template upgrade that adds a new setting picks up its default without the
- * practice having to do anything.
- *
- * This is also what lets provisioning write a three-field document. A brand new
- * practice only needs its name and ODS code stored; everything else comes from
- * the compliant defaults until they edit it.
+ * Everybody gets the neutral defaults. The one deployment that is the demo
+ * gets the Frogmorton showcase laid over them. Until these were separated the
+ * demo *was* the defaults, so every practice inherited its address, its staff
+ * and its CQC rating for anything they had not yet edited.
  */
-function mergeDeep<T>(base: T, override: unknown): T {
-  if (override === undefined || override === null) return base
-  if (Array.isArray(base)) return (Array.isArray(override) ? override : base) as T
-  if (!isPlainObject(base) || !isPlainObject(override)) return override as T
-
-  const out: Plain = { ...base }
-  for (const [key, value] of Object.entries(override)) {
-    out[key] = key in (base as Plain) ? mergeDeep((base as Plain)[key], value) : value
-  }
-  return out as T
+function baseConfig(slug: string): SiteConfig {
+  return isDemoContentFor(slug) ? demoConfig : defaultConfig
 }
+
 
 /** Applies any migrations needed to bring an older saved config up to date. */
-function migrate(stored: Plain): Plain {
+function migrate(stored: Plain, slug: string): Plain {
   const version = typeof stored.schemaVersion === 'number' ? stored.schemaVersion : 0
-  // No migrations yet. Add them here as `if (version < 2) { ... }` when the
-  // shape changes, so existing practice sites upgrade in place.
-  if (version < SCHEMA_VERSION) {
-    return { ...stored, schemaVersion: SCHEMA_VERSION }
+  if (version >= SCHEMA_VERSION) return stored
+
+  let next = stored
+
+  // 1 -> 2: the demo practice moved out of the defaults into its own overlay.
+  // The demo itself keeps its content; everyone else has it taken back out.
+  if (version < 2 && !isDemoContentFor(slug)) {
+    next = stripDemoContent(next)
   }
-  return stored
+
+  return { ...next, schemaVersion: SCHEMA_VERSION }
 }
 
 /**
@@ -61,19 +54,21 @@ function withStatutoryPages(config: SiteConfig): SiteConfig {
 }
 
 async function load(slug: string): Promise<SiteConfig> {
+  const base = baseConfig(slug)
+
   try {
     const raw = await readKey(configKey(slug))
-    if (!raw) return defaultConfig
+    if (!raw) return base
 
     const parsed = JSON.parse(raw) as unknown
-    if (!isPlainObject(parsed)) return defaultConfig
+    if (!isPlainObject(parsed)) return base
 
-    return withStatutoryPages(mergeDeep(defaultConfig, migrate(parsed)))
+    return withStatutoryPages(mergeDeep(base, migrate(parsed, slug)))
   } catch (err) {
     // A broken backend must never take the whole website down. Patients still
     // need the phone number and the opening hours.
     console.error(`[simple-surgery] failed to load config for ${slug}, using defaults:`, err)
-    return defaultConfig
+    return base
   }
 }
 

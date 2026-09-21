@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import { AdminEditor } from '@/components/admin/AdminEditor'
 import { getSiteConfig } from '@/lib/config'
 import { isDemoAdminFor } from '@/lib/demo'
-import { siteBase } from '@/lib/routing'
+import { liveSiteUrl } from '@/lib/routing'
 import { describeDriver } from '@/lib/storage'
 
 export const metadata: Metadata = {
@@ -43,7 +43,6 @@ export default async function AdminDemoPage({ params }: Props) {
   if (!isDemoAdminFor(site)) notFound()
 
   const config = await getSiteConfig(site)
-  const base = siteBase(site)
 
   return (
     <AdminEditor
@@ -51,7 +50,7 @@ export default async function AdminDemoPage({ params }: Props) {
       site={site}
       initialConfig={config}
       storage={await describeDriver()}
-      siteUrl={config.advanced.siteUrl || base || '/'}
+      siteUrl={liveSiteUrl({ slug: site, configuredUrl: config.advanced.siteUrl })}
       billing={null}
     />
   )

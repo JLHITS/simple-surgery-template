@@ -128,31 +128,39 @@ export default async function ContactPage({ params }: Props) {
                 </div>
               )}
 
-              <div className="flex gap-4">
-                <span className="accent-text mt-0.5 shrink-0" aria-hidden="true">
-                  <Icon name="pin" size={22} />
-                </span>
-                <div>
-                  <dt className="font-bold">Address</dt>
-                  <dd className="mt-0.5">
-                    <address className="break-words not-italic leading-relaxed">
-                      {addressLines.map((line) => (
-                        <span key={line} className="block">
-                          {line}
-                        </span>
-                      ))}
-                    </address>
-                  </dd>
-                  <dd className="mt-2">
-                    <a
-                      href={`https://www.google.com/maps/search/?api=1&query=${mapsQuery}`}
-                      className="ss-link text-[0.95rem]"
-                    >
-                      Get directions
-                    </a>
-                  </dd>
+              {/*
+                Only once there is an address to show. A heading with nothing
+                under it, above a "Get directions" link that searches a map for
+                an empty string, is worse than leaving the block out until the
+                practice has filled their address in.
+              */}
+              {addressLines.length > 0 && (
+                <div className="flex gap-4">
+                  <span className="accent-text mt-0.5 shrink-0" aria-hidden="true">
+                    <Icon name="pin" size={22} />
+                  </span>
+                  <div>
+                    <dt className="font-bold">Address</dt>
+                    <dd className="mt-0.5">
+                      <address className="break-words not-italic leading-relaxed">
+                        {addressLines.map((line) => (
+                          <span key={line} className="block">
+                            {line}
+                          </span>
+                        ))}
+                      </address>
+                    </dd>
+                    <dd className="mt-2">
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${mapsQuery}`}
+                        className="ss-link text-[0.95rem]"
+                      >
+                        Get directions
+                      </a>
+                    </dd>
+                  </div>
                 </div>
-              </div>
+              )}
             </dl>
 
             {(practice.parkingInfo || practice.accessInfo || practice.publicTransportInfo) && (

@@ -1,4 +1,5 @@
 import { getSiteConfig } from '@/lib/config'
+import { practiceName } from '@/lib/practice'
 import { siteBase } from '@/lib/routing'
 
 export const runtime = 'nodejs'
@@ -13,10 +14,13 @@ export async function GET(_request: Request, { params }: Context) {
   const { practice } = await getSiteConfig(site)
   const base = siteBase(site)
 
+  const name = practiceName(practice)
+  const town = practice.town.trim()
+
   const manifest = {
-    name: practice.name,
-    short_name: practice.name.split(' ').slice(0, 2).join(' '),
-    description: `${practice.name} is an NHS GP surgery in ${practice.town}.`,
+    name,
+    short_name: name.split(' ').slice(0, 2).join(' '),
+    description: `${name} is an NHS GP surgery${town ? ` in ${town}` : ''}.`,
     start_url: base || '/',
     scope: base || '/',
     display: 'standalone',

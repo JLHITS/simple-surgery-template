@@ -47,3 +47,26 @@ export function isDemoAdminFor(slug: string): boolean {
   const allowed = demoAdminSlug()
   return allowed !== null && normaliseSlug(slug) === allowed
 }
+
+/**
+ * Whether this practice is the showcase, and so gets the Frogmorton content.
+ *
+ * Deliberately stricter than `demoAdminSlug`. That one answers "may the
+ * passwordless editor be rendered here", which `DEMO_ADMIN=1` can turn on for
+ * any single tenant deployment. This one decides whose *content* a site
+ * serves, and getting it wrong means a real practice's patients are shown a
+ * fictional address and a fictional practice manager.
+ *
+ * So it takes both: the deployment must be single tenant, and its one practice
+ * must be the demo. A practice we host is multi-tenant and can never match. A
+ * self-hoster running the open source template under their own SITE_KEY gets
+ * the neutral defaults, which is what they want: their own site, empty, ready
+ * to fill in.
+ */
+export function isDemoContentFor(slug: string): boolean {
+  const single = singleTenantSlug()
+  if (!single) return false
+
+  const demo = normaliseSlug(process.env.DEMO_SITE || 'demo')
+  return single === demo && normaliseSlug(slug) === demo
+}

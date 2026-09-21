@@ -1,6 +1,6 @@
 import type { SiteConfig } from './types'
 
-export const SCHEMA_VERSION = 1
+export const SCHEMA_VERSION = 2
 
 /**
  * The seed content every new site starts from.
@@ -10,40 +10,47 @@ export const SCHEMA_VERSION = 1
  * reading age 9 to 11, sentences under 20 words, paragraphs under 3 sentences,
  * active voice, and no supplier product names. Practices that never edit a word
  * of it still end up with compliant, plain-English content.
+ *
+ * What is deliberately NOT here is anything that describes a particular
+ * practice. No name, no address, no staff, no CQC rating, no GP earnings. A
+ * saved config is deep merged over this, and a brand new site has almost
+ * nothing saved, so anything invented here gets published as that practice's
+ * own. In the case of the compliance figures it would also be a false
+ * statutory declaration. Blank is correct: the practice fills it in, and every
+ * page is written to read properly until they do.
+ *
+ * The demo practice's showcase content is an overlay in `demo-content.ts`,
+ * applied to the demo deployment only.
  */
 export const defaultConfig: SiteConfig = {
   schemaVersion: SCHEMA_VERSION,
   updatedAt: '2026-01-01T00:00:00.000Z',
   reviewedUpdates: [],
 
+  // Provisioning seeds the name and the ODS code from what the practice
+  // bought. The rest is theirs to fill in, and every page that uses these
+  // fields leaves the line out rather than printing an empty one.
   practice: {
-    name: 'Frogmorton Medical Centre',
-    strapline: 'NHS GP surgery in Frogmorton',
-    // Deliberately not a real ODS code. Real ones map to real practices.
-    odsCode: 'Z99999',
+    name: '',
+    strapline: '',
+    odsCode: '',
     logoUrl: '',
-    logoAlt: 'Frogmorton Medical Centre',
-    addressLine1: '14 Bywater Road',
+    logoAlt: '',
+    addressLine1: '',
     addressLine2: '',
-    town: 'Frogmorton',
-    county: 'Eastfarthing',
-    postcode: 'SH1 4RE',
-    // 01632 960xxx is the range Ofcom reserves for use in fiction, so these
-    // numbers cannot ring a real person no matter who types them in.
-    phone: '01632 960 118',
-    phoneSecondary: '01632 960 119',
-    phoneSecondaryLabel: 'Prescriptions line',
-    email: 'reception@frogmorton.example',
+    town: '',
+    county: '',
+    postcode: '',
+    phone: '',
+    phoneSecondary: '',
+    phoneSecondaryLabel: '',
+    email: '',
     mapEmbedUrl: '',
-    parkingInfo:
-      'We have 12 patient parking spaces at the front of the building. Two of these are blue badge spaces beside the main door.',
-    accessInfo:
-      'The building is on one level. There are no steps at the entrance. We have an accessible toilet and a hearing loop at reception.',
-    publicTransportInfo:
-      'The surgery is on the East Road, opposite The Floating Log. The nearest bus stop is a two minute walk.',
-    boundaryDescription:
-      'We can register you if you live inside our practice area. It covers Frogmorton, Bywater and the villages along the East Road as far as Whitfurrows.',
-    boundaryPostcodes: 'SH1, SH2, SH3 4, SH3 5',
+    parkingInfo: '',
+    accessInfo: '',
+    publicTransportInfo: '',
+    boundaryDescription: '',
+    boundaryPostcodes: '',
     boundaryMapUrl: '',
   },
 
@@ -59,52 +66,43 @@ export const defaultConfig: SiteConfig = {
     ],
     notes:
       'Phone lines open at 8am. The busiest time to call is between 8am and 9:30am.',
-    closures: [
-      {
-        date: '2026-08-31',
-        reason: 'Summer bank holiday',
-        allDay: true,
-      },
-      {
-        date: '2026-09-17',
-        reason: 'Staff training afternoon',
-        allDay: false,
-        from: '13:00',
-        to: '18:30',
-      },
-      { date: '2026-12-25', reason: 'Christmas Day', allDay: true },
-      { date: '2026-12-26', reason: 'Boxing Day', allDay: true },
-      { date: '2027-01-01', reason: "New Year's Day", allDay: true },
-    ],
+    // Bank holidays move, and practices close on different ones, so there is
+    // nothing honest to put here. The Closures list starts empty.
+    closures: [],
     outOfHoursInfo:
       'When we are closed, call NHS 111 free from any phone. They will tell you what to do and can arrange to see you if you need it.',
     receptionNote: 'Reception is open during surgery hours.',
 
+    // Off until the practice says they offer it, and says where. The wording
+    // stays, so switching it on gives them a working section to edit rather
+    // than a column of empty boxes.
     extendedAccess: {
-      enabled: true,
+      enabled: false,
       title: 'Evening and weekend appointments',
       description:
         'You can book appointments outside our normal hours. These are for routine care that can be planned, not for urgent problems.',
-      location: 'Four Farthings Health Hub, Bywater',
+      location: '',
       days: [
-        { day: 'monday', closed: false, open: '18:30', close: '20:00' },
+        { day: 'monday', closed: true, open: '18:30', close: '20:00' },
         { day: 'tuesday', closed: true, open: '18:30', close: '20:00' },
-        { day: 'wednesday', closed: false, open: '18:30', close: '20:00' },
+        { day: 'wednesday', closed: true, open: '18:30', close: '20:00' },
         { day: 'thursday', closed: true, open: '18:30', close: '20:00' },
         { day: 'friday', closed: true, open: '18:30', close: '20:00' },
-        { day: 'saturday', closed: false, open: '09:00', close: '13:00' },
+        { day: 'saturday', closed: true, open: '09:00', close: '13:00' },
         { day: 'sunday', closed: true, open: '09:00', close: '13:00' },
       ],
       bookingNote:
         'Book these in advance by calling us or asking through the NHS App. You cannot turn up without an appointment.',
     },
 
+    // NHS guidance expects patients to be told when each way of getting in
+    // touch is open. Only the practice knows, so this waits for them.
     accessModes: {
-      enabled: true,
-      walkIn: 'Monday to Friday, 8am to 6:30pm',
-      telephone: 'Monday to Friday, 8am to 6:30pm',
-      onlineConsultation: 'Monday to Friday, 8am to 6:30pm',
-      note: 'All three are available throughout our core hours. We are closed on bank holidays.',
+      enabled: false,
+      walkIn: '',
+      telephone: '',
+      onlineConsultation: '',
+      note: '',
     },
   },
 
@@ -130,15 +128,16 @@ export const defaultConfig: SiteConfig = {
     extraLinks: [],
   },
 
+  // A banner announcing something that is not happening is worse than no
+  // banner at all, so this is off, and empty.
   notice: {
-    enabled: true,
+    enabled: false,
     level: 'info',
-    title: 'Flu and COVID-19 vaccinations',
-    body:
-      'Our autumn vaccination clinics are now open. If you are eligible we will text you an invitation. You can also book using the NHS App.',
-    linkUrl: '/services/vaccinations',
-    linkText: 'Read about vaccinations',
-    expiresOn: '2026-12-31',
+    title: '',
+    body: '',
+    linkUrl: '',
+    linkText: '',
+    expiresOn: '',
   },
 
   content: {
@@ -236,76 +235,10 @@ Take unused or out of date medicines to any pharmacy. Do not put them in the bin
       'How to reach us, where to find us, and when we are open.',
   },
 
-  team: [
-    {
-      id: 'tm-1',
-      name: 'Dr Rosie Cotton',
-      gender: 'Female',
-      role: 'GP Partner',
-      group: 'Doctors',
-      bio: 'Dr Cotton has worked at the practice since 2014. She has a special interest in diabetes and long term conditions.',
-      availability: 'Monday, Tuesday, Thursday',
-    },
-    {
-      id: 'tm-2',
-      name: 'Dr Meriadoc Brandybuck',
-      gender: 'Male',
-      role: 'GP Partner',
-      group: 'Doctors',
-      bio: 'Dr Brandybuck leads our work on heart health. He also supervises our trainee doctors.',
-      availability: 'Monday to Friday',
-    },
-    {
-      id: 'tm-3',
-      name: 'Dr Poppy Proudfoot',
-      gender: 'Female',
-      role: 'Salaried GP',
-      group: 'Doctors',
-      bio: "Dr Proudfoot has a special interest in women's health and contraception.",
-      availability: 'Wednesday, Thursday, Friday',
-    },
-    {
-      id: 'tm-4',
-      name: 'Marigold Gamgee',
-      gender: 'Female',
-      role: 'Advanced Nurse Practitioner',
-      group: 'Nursing team',
-      bio: 'Marigold can assess, diagnose and prescribe for many everyday illnesses.',
-      availability: 'Monday to Thursday',
-    },
-    {
-      id: 'tm-5',
-      name: 'Hamfast Gardner',
-      gender: 'Male',
-      role: 'Practice Nurse',
-      group: 'Nursing team',
-      bio: 'Hamfast runs our asthma, diabetes and travel health clinics.',
-    },
-    {
-      id: 'tm-6',
-      name: 'Barliman Butterbur',
-      gender: 'Male',
-      role: 'Clinical Pharmacist',
-      group: 'Nursing team',
-      bio: 'Barliman reviews medicines and can answer questions about your prescriptions.',
-    },
-    {
-      id: 'tm-7',
-      name: 'Bilbo Baggins',
-      gender: 'Male',
-      role: 'Practice Manager',
-      group: 'Management and reception',
-      bio: 'Bilbo manages the practice and handles complaints and feedback.',
-    },
-    {
-      id: 'tm-8',
-      name: 'Reception team',
-      role: 'Patient services',
-      group: 'Management and reception',
-      bio: 'Our receptionists are trained to help you reach the right person. They will ask what you need so they can book you correctly.',
-    },
-  ],
-
+  // Real people. Nothing invented goes here, because a name on a GP website
+  // reads as a clinician the patient can ask for. The About page hides the
+  // team section entirely while this is empty.
+  team: [],
   services: [
     {
       id: 'sv-1',
@@ -988,48 +921,44 @@ Tell us who cares for you. With your permission we can share information with th
     feedUrls: ['https://www.england.nhs.uk/feed/'],
     feedCount: 8,
     homeCount: 3,
-    practiceNews: [
-      {
-        id: 'pn-1',
-        title: 'New online request system',
-        date: '2026-07-14',
-        body: 'You can now send us a request about any health problem online. We reply within 2 working days. Nothing has changed if you prefer to phone us.',
-        pinned: false,
-      },
-      {
-        id: 'pn-2',
-        title: 'Car park resurfacing in September',
-        date: '2026-06-30',
-        body: 'Our car park will be resurfaced during the week of 21 September. Parking will be limited. Please allow extra time or use the street parking on Bywater Road.',
-        pinned: false,
-      },
-    ],
+    // The national feed keeps the News page alive on day one. Anything here
+    // would be an announcement the practice never made.
+    practiceNews: [],
   },
 
+  // Every value in here is a statement the practice makes about itself, and
+  // several of them are statutory declarations: a CQC rating, an ICO
+  // registration number, what the GPs were paid. Shipping a plausible figure
+  // as a default means a practice publishes a declaration nobody at the
+  // practice has ever checked. So they start blank, and the pages that show
+  // them say "not yet published" instead of printing a number.
+  //
+  // The boilerplate that is the same for every practice in England, such as
+  // the GP earnings preamble and the publication scheme, does stay.
   compliance: {
-    cqcRating: 'Good',
-    cqcReportUrl: 'https://www.cqc.org.uk/',
-    icbName: 'NHS Shire and Buckland Integrated Care Board',
+    cqcRating: '',
+    cqcReportUrl: '',
+    icbName: '',
     icbUrl: '',
-    pcnName: 'Four Farthings Primary Care Network',
-    dataProtectionOfficer: 'Bilbo Baggins',
-    dataProtectionEmail: 'dpo@frogmorton.example',
-    icoRegistration: 'Z1234567',
-    complaintsEmail: 'complaints@frogmorton.example',
-    complaintsContactName: 'Bilbo Baggins, Practice Manager',
-    icbComplaintsEmail: 'complaints@shireandbuckland.example',
-    icbComplaintsPhone: '01632 960 940',
+    pcnName: '',
+    dataProtectionOfficer: '',
+    dataProtectionEmail: '',
+    icoRegistration: '',
+    complaintsEmail: '',
+    complaintsContactName: '',
+    icbComplaintsEmail: '',
+    icbComplaintsPhone: '',
     icbComplaintsUrl: '',
-    icbComplaintsAddress: 'Patient Experience Team, NHS Shire and Buckland ICB, Bywater',
+    icbComplaintsAddress: '',
     gpEarningsStatement:
       'All GP practices are required to declare the mean earnings for GPs working to deliver NHS services at the practice.',
-    gpEarningsAmount: '£78,400',
-    gpEarningsFullTime: '2',
-    gpEarningsPartTime: '3',
-    gpEarningsLocum: '0',
-    gpEarningsYear: '2025/26',
-    accessibilityPreparedOn: '2026-08-06',
-    accessibilityReviewedOn: '2026-08-06',
+    gpEarningsAmount: '',
+    gpEarningsFullTime: '',
+    gpEarningsPartTime: '',
+    gpEarningsLocum: '',
+    gpEarningsYear: '',
+    accessibilityPreparedOn: '',
+    accessibilityReviewedOn: '',
     accessibilityTestedBy:
       'Prepared by the practice, using the accessibility testing built into the Simple Surgery template. No independent audit has been carried out yet.',
     accessibilityKnownIssues:
@@ -1107,7 +1036,10 @@ Tell us who cares for you. With your permission we can share information with th
     showSearch: true,
     showTeam: true,
     showNewsInNav: false,
-    siteUrl: 'https://demo.simplesurgery.co',
+    // Blank, not a guess. The admin panel's "View website" link and the
+    // sitemap work this out from the tenant record and the request instead;
+    // see `liveSiteUrl` in lib/routing.
+    siteUrl: '',
     analyticsScriptUrl: '',
     analyticsSiteId: '',
     footerNote: '',

@@ -4,7 +4,7 @@ import { AdminEditor } from '@/components/admin/AdminEditor'
 import { LoginForm } from '@/components/admin/LoginForm'
 import { isAdminConfigured, isAuthenticated } from '@/lib/auth'
 import { getSiteConfig } from '@/lib/config'
-import { siteBase } from '@/lib/routing'
+import { liveSiteUrl } from '@/lib/routing'
 import { describeDriver } from '@/lib/storage'
 import { getTenant, singleTenantSlug } from '@/lib/tenant'
 
@@ -30,7 +30,6 @@ export default async function AdminPage({ params }: Props) {
   if (!single && !tenant) notFound()
 
   const config = await getSiteConfig(site)
-  const base = siteBase(site)
 
   if (!(await isAuthenticated(site))) {
     return (
@@ -50,7 +49,11 @@ export default async function AdminPage({ params }: Props) {
       site={site}
       initialConfig={config}
       storage={storage}
-      siteUrl={config.advanced.siteUrl || base || '/'}
+      siteUrl={liveSiteUrl({
+        slug: site,
+        customDomain: tenant?.customDomain,
+        configuredUrl: config.advanced.siteUrl,
+      })}
       billing={
         tenant
           ? {

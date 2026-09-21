@@ -1012,16 +1012,23 @@ export function NewsSection({ config, update }: SectionProps) {
           checked={news.nhsFeedEnabled}
           onChange={(nhsFeedEnabled) => set({ nhsFeedEnabled })}
         />
+        {/*
+          Two counts, for two different pages. They used to be labelled
+          "Stories on the news page" and "Stories on the home page", which read
+          as the same question twice. The label now names the page and the hint
+          says what that page is for.
+        */}
         <div className="grid gap-4 sm:grid-cols-2">
           <TextInput
-            label="Stories on the news page"
+            label="How many on the News page"
+            hint="The full list, at Home &rsaquo; News."
             type="number"
             value={String(news.feedCount)}
             onChange={(value) => set({ feedCount: Number(value) || 8 })}
           />
           <TextInput
-            label="Stories on the home page"
-            hint="Set to 0 to keep the home page free of news."
+            label="How many on the home page"
+            hint="A short taster under your own content. Set to 0 to keep the home page free of news."
             type="number"
             value={String(news.homeCount)}
             onChange={(value) => set({ homeCount: Number(value) || 0 })}

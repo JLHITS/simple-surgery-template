@@ -2,6 +2,7 @@ import { notFound, redirect } from 'next/navigation'
 import { Footer } from '@/components/Footer'
 import { Header } from '@/components/Header'
 import { getSiteConfig } from '@/lib/config'
+import { practiceName } from '@/lib/practice'
 import { siteBase } from '@/lib/routing'
 import { getTenant, isServing, singleTenantSlug } from '@/lib/tenant'
 
@@ -47,7 +48,7 @@ export default async function SiteLayout({ children, params }: Props) {
       </a>
 
       <Header
-        practiceName={practice.name}
+        practiceName={practiceName(practice)}
         logoUrl={practice.logoUrl}
         logoAlt={practice.logoAlt}
         phone={practice.phone}

@@ -25,6 +25,20 @@ Anything you have to do yourself is listed under **Action needed**.
 - **Clearer news settings.** The two boxes under News read as the same question. They now say
   which page each one controls.
 
+### Action needed
+
+Open your admin panel and check three sections, because anything still holding the example
+content is now blank rather than showing the example practice's details:
+
+- **Practice details** and **Team** - your address, phone, email and staff list.
+- **Compliance** - your CQC rating, ICO registration number and GP earnings figures. Your GP
+  earnings page tells patients the declaration is not published yet until you enter them.
+- **Opening hours** - bank holidays and any other closures, and extended access if you offer
+  it. Extended access is switched off until you turn it on and say where the appointments are.
+
+Anything you had already filled in yourself is untouched. Nothing else needs doing, and there
+are no new environment variables.
+
 ## 1.1.0 - 2026-09-21
 
 - **Automatic migration from Practice365 and other WordPress sites.** When the old site shows

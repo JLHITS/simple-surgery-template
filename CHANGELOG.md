@@ -8,6 +8,8 @@ Anything you have to do yourself is listed under **Action needed**.
 
 ## Unreleased
 
+## 1.2.0 - 2026-09-21
+
 - **Your new website no longer starts with the demo practice's details in it.** The example
   content we use for the demo surgery, including its staff list, address, opening notice and
   CQC rating, used to double as the starting point for every new site. Anything you had not

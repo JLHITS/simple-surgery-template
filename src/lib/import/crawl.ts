@@ -1,6 +1,7 @@
 import { targetFor, type PageTarget } from './content'
 import { anchors, tidy } from './html'
 import { FetchBlocked, fetchPage, normaliseUrl, type FetchedPage } from './fetch'
+import { wordpressReader, type WordPressReader } from './wordpress'
 
 /**
  * Deciding which pages of a practice website are worth reading.
@@ -64,10 +65,13 @@ export interface CrawledPage extends FetchedPage {
 
 /** Things that are never worth fetching, however they score. */
 const SKIP =
-  /\.(pdf|docx?|xlsx?|pptx?|jpe?g|png|gif|svg|webp|zip|mp4|mp3|ics)(\?|$)|^mailto:|^tel:|\/wp-(admin|content|json)\/|\/feed\/?$|#/i
+  /\.(pdf|docx?|xlsx?|pptx?|jpe?g|png|gif|svg|webp|zip|mp4|mp3|ics)(\?|$)|^mailto:|^tel:|\/wp-(admin|content|json)\/|\/(news|blog|events?|category|tag|author|feed)(\/|$)|\/20\d{2}\/\d{1,2}\/|#/i
 
 export function scoreFor(url: string, text: string): { score: number; kind: PageKind } | null {
-  const haystack = `${url} ${text}`
+  // Parent folders such as /practice-information/ must not turn every nested
+  // appointments or team page into an "about" page.
+  const path = url.split('?')[0].replace(/\/$/, '')
+  const haystack = `${path.split('/').pop() || ''} ${text}`
   for (const { pattern, score, kind } of WANTED) {
     if (pattern.test(haystack)) return { score, kind }
   }
@@ -85,20 +89,20 @@ function sameSite(a: URL, b: URL): boolean {
  * through, the pages already read are still worth having, so a blocked page is
  * skipped like a missing one. Only a blocked home page stops the import.
  */
-async function fetchPageOrSkip(target: string | URL): Promise<FetchedPage | null> {
+async function fetchPageOrSkip(target: string | URL, signal?: AbortSignal): Promise<FetchedPage | null> {
   try {
-    return await fetchPage(target)
+    return await fetchPage(target, signal)
   } catch (err) {
     if (err instanceof FetchBlocked) return null
     throw err
   }
 }
 
-async function sitemapUrls(origin: URL): Promise<string[]> {
+async function sitemapUrls(origin: URL, signal?: AbortSignal): Promise<string[]> {
   const found: string[] = []
 
   for (const path of ['/sitemap.xml', '/sitemap_index.xml', '/wp-sitemap.xml']) {
-    const page = await fetchPageOrSkip(new URL(path, origin))
+    const page = await fetchPageOrSkip(new URL(path, origin), signal)
     if (!page) continue
 
     const locs = [...page.html.matchAll(/<loc>\s*([^<]+?)\s*<\/loc>/gi)].map((m) => tidy(m[1]))
@@ -107,7 +111,10 @@ async function sitemapUrls(origin: URL): Promise<string[]> {
     // A sitemap index points at more sitemaps. Follow one level, no further.
     const nested = locs.filter((l) => /sitemap.*\.xml$/i.test(l)).slice(0, 3)
     for (const child of nested) {
-      const sub = await fetchPageOrSkip(child)
+      try {
+        if (!sameSite(new URL(child), origin)) continue
+      } catch { continue }
+      const sub = await fetchPageOrSkip(child, signal)
       if (!sub) continue
       found.push(...[...sub.html.matchAll(/<loc>\s*([^<]+?)\s*<\/loc>/gi)].map((m) => tidy(m[1])))
     }
@@ -209,13 +216,46 @@ class PagePlan {
  */
 export async function crawl(input: string): Promise<CrawledPage[]> {
   const start = normaliseUrl(input)
+  // Leave time for extraction and the response before the route's 120s limit.
+  const signal = AbortSignal.timeout(90_000)
+
+  // One API index per scan, reused for the home page and any blocked subpages.
+  let api: Promise<WordPressReader | null> | undefined
+  let apiReader: WordPressReader | null = null
+  const read = async (target: string | URL): Promise<FetchedPage | null> => {
+    if (apiReader) {
+      const page = await apiReader.read(target)
+      if (page) return page
+    }
+    let blocked: FetchBlocked | undefined
+    try {
+      const page = await fetchPage(target, signal)
+      if (page) return page
+    } catch (err) {
+      if (!(err instanceof FetchBlocked)) throw err
+      blocked = err
+    }
+    api ??= wordpressReader(new URL(blocked?.url || start.toString()), signal)
+    apiReader = await api
+    const page = await apiReader?.read(blocked?.url || target)
+    if (page) return page
+    if (blocked) throw blocked
+    return null
+  }
+
+  const readOrSkip = async (target: string): Promise<FetchedPage | null> => {
+    try { return await read(target) } catch (err) {
+      if (err instanceof FetchBlocked) return null
+      throw err
+    }
+  }
 
   let home: FetchedPage | null
   try {
-    home = await fetchPage(start)
+    home = await read(start)
   } catch (err) {
     if (err instanceof FetchBlocked) {
-      err.suggestions = await suggestPages(new URL(err.url)).catch(() => [])
+      err.suggestions = await suggestPages(new URL(err.url), signal).catch(() => [])
     }
     throw err
   }
@@ -232,13 +272,25 @@ export async function crawl(input: string): Promise<CrawledPage[]> {
   // The sitemap is what finds the deeper content pages. A practice's carers
   // page or PPG page is rarely linked from the home page, and those are
   // exactly the ones worth offering to bring across.
-  for (const loc of await sitemapUrls(homeUrl)) plan.consider(loc, '')
+  const publicApi = api ? await api : null
+  if (publicApi) {
+    for (const { href, text } of publicApi.links) plan.consider(href, text)
+  } else {
+    for (const loc of await sitemapUrls(homeUrl, signal)) plan.consider(loc, '')
+  }
 
   for (const [url, kind] of plan.factPages()) {
-    const page = await fetchPageOrSkip(url)
+    const page = await readOrSkip(url)
     if (!page) continue
     fetched.add(url)
     pages.push({ ...page, kind, target: targetFor(page.url, plan.known.get(url) || '') ?? undefined })
+  }
+
+  // The API may only have become necessary for a blocked subpage. Its index
+  // can still reveal content that was absent from the homepage and sitemap.
+  const recoveredApi = api ? await api : null
+  if (recoveredApi) {
+    for (const { href, text } of recoveredApi.links) plan.consider(href, text)
   }
 
   const takenTargets = new Set<string>()
@@ -250,7 +302,7 @@ export async function crawl(input: string): Promise<CrawledPage[]> {
   for (const [url, target] of plan.contentPages(takenTargets, new Set())) {
     if (contentFetched >= MAX_CONTENT_PAGES) break
 
-    const page = await fetchPageOrSkip(url)
+    const page = await readOrSkip(url)
     if (!page) continue
 
     fetched.add(url)
@@ -269,11 +321,11 @@ export async function crawl(input: string): Promise<CrawledPage[]> {
  * usually works. When it does not, the practice is told which kinds of page to
  * save instead.
  */
-async function suggestPages(homeUrl: URL): Promise<string[]> {
+async function suggestPages(homeUrl: URL, signal?: AbortSignal): Promise<string[]> {
   const home = new URL('/', homeUrl).toString()
   const plan = new PagePlan(homeUrl, new Set([home.replace(/\/$/, '')]))
 
-  for (const loc of await sitemapUrls(homeUrl)) plan.consider(loc, '')
+  for (const loc of await sitemapUrls(homeUrl, signal)) plan.consider(loc, '')
 
   const facts = plan.factPages()
   const takenTargets = new Set<string>()

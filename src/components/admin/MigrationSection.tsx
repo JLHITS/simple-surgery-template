@@ -111,6 +111,8 @@ export function MigrationSection({
   const [skipped, setSkipped] = useState<string[]>([])
 
   async function scan() {
+    setBlocked(null)
+    setManualOpen(false)
     setReading('site')
     await read({ url }, 'We could not read that website.')
   }

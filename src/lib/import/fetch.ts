@@ -39,7 +39,7 @@ export class FetchRefused extends Error {}
  * included, makes them from. The challenge page is a perfectly good 200 or 202
  * response, so without this it was read as the practice's content: the import
  * "found" a practice called "JavaScript is disabled" and nothing else, across
- * every page it read. Saying plainly what happened is the only honest result.
+ * every page it read. The crawler can try the public content API instead.
  */
 export class FetchBlocked extends FetchRefused {
   /** The address that was blocked, after any redirects. */
@@ -49,7 +49,7 @@ export class FetchBlocked extends FetchRefused {
 
   constructor(url: URL) {
     super(
-      `${url.hostname} has a security check that stops websites being read automatically, so all we could see was the check itself, not your pages. Nothing has been brought across yet. Your pages still open normally in your own browser, so you can save them from there and add them below.`,
+      `${url.hostname} has a security check, and we could not read its pages through its public content API either. Nothing has been brought across yet. Your pages still open normally in your own browser, so you can save them from there and add them below.`,
     )
     this.url = url.toString()
   }
@@ -191,69 +191,107 @@ async function assertPublicHost(url: URL): Promise<void> {
  * several guessed pages is expected and must not stop the crawl. Throws only
  * for refusals, which the caller shows to the practice.
  */
-export async function fetchPage(target: string | URL): Promise<FetchedPage | null> {
-  let url = typeof target === 'string' ? normaliseUrl(target) : target
+export async function fetchPage(target: string | URL, signal?: AbortSignal): Promise<FetchedPage | null> {
+  const result = await fetchResource(target, false, signal)
+  return result ? { url: result.url, html: result.text } : null
+}
+
+/** Public WordPress data uses the same redirect, address, size and time limits. */
+export async function fetchJson(target: string | URL, signal?: AbortSignal): Promise<unknown> {
+  const result = await fetchResource(target, true, signal)
+  if (!result) return null
+  try {
+    return JSON.parse(result.text) as unknown
+  } catch {
+    return null
+  }
+}
+
+async function fetchResource(
+  target: string | URL,
+  json: boolean,
+  signal?: AbortSignal,
+): Promise<{ url: string; text: string } | null> {
+  let url = normaliseUrl(target.toString())
 
   for (let hop = 0; hop <= MAX_REDIRECTS; hop += 1) {
+    if (signal?.aborted) return null
     await assertPublicHost(url)
 
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
 
-    let res: Response
     try {
-      res = await fetch(url, {
+      const res = await fetch(url, {
         redirect: 'manual',
-        signal: controller.signal,
+        signal: signal ? AbortSignal.any([signal, controller.signal]) : controller.signal,
         headers: {
           'User-Agent': USER_AGENT,
-          Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          Accept: json ? 'application/json' : 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
           'Accept-Language': 'en-GB,en;q=0.9',
         },
         cache: 'no-store',
       })
-    } catch {
+      if (res.status >= 300 && res.status < 400) {
+        await res.body?.cancel()
+        const location = res.headers.get('location')
+        if (!location) return null
+        try {
+          url = new URL(location, url)
+        } catch {
+          return null
+        }
+        url = normaliseUrl(url.toString())
+        continue
+      }
+
+      if (isBotChallenge(res, null)) {
+        await res.body?.cancel()
+        throw new FetchBlocked(url)
+      }
+
+      const type = res.headers.get('content-type') || ''
+      const accepted = json
+        ? /application\/(?:[\w.-]+\+)?json/i
+        : /text\/html|application\/xhtml|text\/xml|application\/xml/i
+      // Error pages can contain the only indication that a firewall blocked us.
+      if (type && !accepted.test(type) && (res.ok || !/text\/html/i.test(type))) {
+        await res.body?.cancel()
+        return null
+      }
+
+      const declared = Number(res.headers.get('content-length') || 0)
+      if (declared > MAX_BYTES) {
+        await res.body?.cancel()
+        return null
+      }
+
+      // Cap while streaming, with the timeout still active during body reads.
+      const reader = res.body?.getReader()
+      if (!reader) return null
+      const decoder = new TextDecoder()
+      let bytes = 0
+      let text = ''
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        bytes += value.byteLength
+        if (bytes > MAX_BYTES) {
+          await reader.cancel()
+          return null
+        }
+        text += decoder.decode(value, { stream: true })
+      }
+      text += decoder.decode()
+      if (isBotChallenge(res, text)) throw new FetchBlocked(url)
+      if (!res.ok || (type && !accepted.test(type))) return null
+      return { url: url.toString(), text }
+    } catch (err) {
+      if (err instanceof FetchRefused) throw err
       return null
     } finally {
       clearTimeout(timer)
     }
-
-    if (res.status >= 300 && res.status < 400) {
-      const location = res.headers.get('location')
-      if (!location) return null
-      try {
-        url = new URL(location, url)
-      } catch {
-        return null
-      }
-      if (url.protocol !== 'https:' && url.protocol !== 'http:') return null
-      continue
-    }
-
-    if (!res.ok) {
-      // A refusal that is really a bot check deserves a clear explanation
-      // rather than looking like a page that does not exist.
-      if (isBotChallenge(res, null)) throw new FetchBlocked(url)
-      return null
-    }
-
-    const type = res.headers.get('content-type') || ''
-    if (type && !/text\/html|application\/xhtml|text\/xml|application\/xml/i.test(type)) {
-      return null
-    }
-
-    const declared = Number(res.headers.get('content-length') || 0)
-    if (declared > MAX_BYTES) return null
-
-    // Read with a cap, because content-length can lie or be absent.
-    const buffer = await res.arrayBuffer().catch(() => null)
-    if (!buffer) return null
-    if (buffer.byteLength > MAX_BYTES) return null
-
-    const html = new TextDecoder('utf-8').decode(buffer)
-    if (isBotChallenge(res, html)) throw new FetchBlocked(url)
-
-    return { url: url.toString(), html }
   }
 
   return null

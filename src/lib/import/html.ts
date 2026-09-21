@@ -127,7 +127,7 @@ export function anchors(html: string, base: string): Anchor[] {
         continue
       }
     }
-    out.push({ href, text: tidy(m[2] || '') })
+    out.push({ href, text: tidy(toText(m[2] || '')) })
   }
   return out
 }

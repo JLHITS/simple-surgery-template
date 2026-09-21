@@ -872,7 +872,13 @@ export function extract(pages: CrawledPage[]): ExtractResult {
 
   const email = findEmail(pages, host)
   if (email) {
-    push('practice.email', 'Practice details', 'Email address', email, 'high', home.url, {
+    // A public page can link to its ICB or another service's nhs.net mailbox.
+    // Being a mailto link does not make it the practice's own email address.
+    const ownDomain = email.endsWith(`@${host.replace(/^www\./, '')}`)
+    const source = pages.find(p => anchors(p.html, p.url).some(a =>
+      a.href.toLowerCase().replace(/^mailto:/, '').split('?')[0] === email,
+    ))?.url || home.url
+    push('practice.email', 'Practice details', 'Email address', email, ownDomain ? 'medium' : 'low', source, {
       practice: { email },
     })
   } else {

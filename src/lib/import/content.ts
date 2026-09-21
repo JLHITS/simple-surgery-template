@@ -371,7 +371,8 @@ export function targetFor(url: string, pageTitle: string): PageTarget | null {
 
   if (NEVER_A_PAGE.test(path)) return null
 
-  const haystack = `${path} ${pageTitle}`
+  const leaf = path.replace(/\/$/, '').split('/').pop() || ''
+  const haystack = `${leaf} ${pageTitle}`
   return TARGETS.find((target) => target.pattern.test(haystack)) || null
 }
 

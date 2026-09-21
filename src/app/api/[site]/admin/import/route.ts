@@ -8,6 +8,7 @@ import { normaliseSlug } from '@/lib/storage'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
+export const maxDuration = 120
 
 /**
  * Reads a practice's existing website and reports what it found.

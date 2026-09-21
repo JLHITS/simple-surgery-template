@@ -8,6 +8,8 @@ Anything you have to do yourself is listed under **Action needed**.
 
 ## Unreleased
 
+## 1.1.0 - 2026-09-21
+
 - **Automatic migration from Practice365 and other WordPress sites.** When the old site shows
   our reader a security check, migration now tries its public page API automatically. No API
   key, browser extension or saved files are needed when that API is available. Review the

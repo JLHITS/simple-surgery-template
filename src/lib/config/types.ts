@@ -250,6 +250,17 @@ export interface SiteConfig {
      */
     requestUrl: string
     requestOpenNote: string
+    /**
+     * Puts a "Contact us online" button in the header, beside the phone
+     * number, on every page.
+     *
+     * On by default. Patients told to "contact the surgery" look for the
+     * phone number first, and the 8am queue is what online requests exist to
+     * shorten, so the online route belongs next to it rather than a click
+     * away on the appointments page. Hidden automatically when there is no
+     * request address.
+     */
+    showRequestInHeader: boolean
     prescriptionUrl: string
     registrationUrl: string
     nhsAppUrl: string

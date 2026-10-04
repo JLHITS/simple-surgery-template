@@ -12,6 +12,8 @@ interface HeaderProps {
   logoUrl: string
   logoAlt: string
   phone: string
+  /** The online request tool, or empty to leave the button out. */
+  requestUrl: string
   showSearch: boolean
   showNhsLogo: boolean
   /** Practice URL prefix, or the empty string in single tenant mode. */
@@ -23,6 +25,7 @@ export function Header({
   logoUrl,
   logoAlt,
   phone,
+  requestUrl,
   showSearch,
   showNhsLogo,
   base,
@@ -95,6 +98,24 @@ export function Header({
               </a>
             )}
 
+            {/*
+             * The online route, beside the phone number rather than a click
+             * away on the appointments page: a patient looking for how to get
+             * in touch sees both together. Worded as NHS England recommends,
+             * for what it does rather than what the supplier calls it. Below
+             * the large breakpoint it is the first thing in the menu instead,
+             * as the phone number is on a phone.
+             */}
+            {requestUrl && (
+              <a
+                href={requestUrl}
+                className="hidden min-h-11 items-center gap-2 radius-card accent-bg px-3 py-2 text-sm font-bold text-white no-underline hover:opacity-90 lg:inline-flex"
+              >
+                <Icon name="message" size={18} />
+                Contact us online
+              </a>
+            )}
+
             {showSearch && (
               <button
                 type="button"
@@ -159,6 +180,17 @@ export function Header({
       >
         <div className="ss-container">
           <ul className="flex flex-col lg:flex-row lg:gap-1">
+            {requestUrl && (
+              <li className="border-b border-nhs-grey-4 py-3 lg:hidden">
+                <a
+                  href={requestUrl}
+                  className="flex min-h-12 items-center justify-center gap-2 radius-card accent-bg px-4 py-3 text-base font-bold text-white no-underline"
+                >
+                  <Icon name="message" size={18} />
+                  Contact us online
+                </a>
+              </li>
+            )}
             {MAIN_NAV.map((item) => {
               const active = isActive(pathname, base, item)
               return (

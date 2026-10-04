@@ -256,9 +256,13 @@ export function buildTimeline(core: OpeningDay[], extended: OpeningDay[] | null)
   const earliest = Math.min(...active.map(open))
   const latest = Math.max(...active.map(close))
 
-  // Round out to whole hours and keep at least a six hour window.
-  let from = Math.floor(earliest / 60) * 60
-  let to = Math.ceil(latest / 60) * 60
+  // The axis runs from opening to closing, to the half hour, so its first and
+  // last labels are the times the surgery opens and closes. Rounding out to
+  // whole hours made 6:30pm a 7pm axis whose last label was 5pm, with the bar
+  // running on past it. At least a six hour window, so one short day still
+  // reads as a bar rather than a full width block.
+  let from = Math.floor(earliest / 30) * 30
+  let to = Math.ceil(latest / 30) * 30
   if (to - from < 360) to = from + 360
   from = Math.max(0, from)
   to = Math.min(24 * 60, to)
@@ -292,17 +296,17 @@ export function buildTimeline(core: OpeningDay[], extended: OpeningDay[] | null)
     ),
   }))
 
-  // Four or five evenly spaced hour marks read better than one per hour.
+  // Both ends are always marked. Between them, whole hours every two or three,
+  // which reads better than one per hour, leaving out any that would crowd
+  // the closing time's label.
   const totalHours = span / 60
-  const step = totalHours > 10 ? 3 : 2
-  const ticks: Timeline['ticks'] = []
-  for (let m = from; m <= to; m += step * 60) {
-    ticks.push({
-      hour: m / 60,
-      position: position(m),
-      label: formatTime(minutesToTime(m)),
-    })
+  const step = (totalHours > 12 ? 3 : 2) * 60
+  const tick = (m: number) => ({ hour: m / 60, position: position(m), label: formatTime(minutesToTime(m)) })
+  const ticks: Timeline['ticks'] = [tick(from)]
+  for (let m = Math.ceil((from + step) / 60) * 60; m < to; m += step) {
+    if (to - m >= 75) ticks.push(tick(m))
   }
+  ticks.push(tick(to))
 
   return { days, ticks, hasExtended: days.some((d) => d.extended !== null) }
 }

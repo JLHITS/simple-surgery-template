@@ -120,6 +120,7 @@ export const defaultConfig: SiteConfig = {
     requestUrl: 'https://www.nhs.uk/nhs-app/',
     requestOpenNote:
       'You can send us a request from 8am to 6:30pm, Monday to Friday, excluding bank holidays. We reply within 2 working days.',
+    showRequestInHeader: true,
     prescriptionUrl: 'https://www.nhs.uk/nhs-app/nhs-app-help-and-support/',
     registrationUrl: 'https://gp-registration.nhs.uk/',
     nhsAppUrl: 'https://www.nhs.uk/nhs-app/',

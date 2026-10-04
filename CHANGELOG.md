@@ -8,6 +8,43 @@ Anything you have to do yourself is listed under **Action needed**.
 
 ## Unreleased
 
+- **Formatting buttons in the text editor.** Every page's wording now opens with buttons for
+  headings, bold, links, bullet and numbered lists and callouts, over the text as it will look
+  on your website. Select some words and press a button. Adding a link asks for the words and
+  the address, and takes a web address, an email address or a phone number. Pasting from Word
+  or another website keeps the headings, lists, bold and links and tidies away the fonts and
+  colours. Your existing wording is unchanged, and **Edit as plain text** is still there if you
+  prefer it.
+- **A "Contact us online" button beside your phone number.** It sits at the top of every page,
+  so patients see the online route before they join the phone queue, and it is the first thing
+  in the menu on a phone. It is on unless you turn it off, in **Online services**, and it only
+  appears when you have an online request address.
+- **Migration from Practice365 is much better.** In testing against a real Practice365 site:
+  - **Your team comes across** with job titles and the groups they are listed under, including
+    staff pages that list names in capitals, like "DR JANE SMITH (F)".
+  - **Your policies come across**, one at a time. Policies kept in a policies folder or as
+    expanders on a "Practice information" page are each offered separately, and each one you
+    tick is added to your Practice policies page as its own section. One covering the same
+    ground as ours, such as chaperones, replaces ours rather than sitting beside it.
+  - **Pages read as they did**, with far less tidying up afterwards. Text inside NHS-style cards,
+    lines separated by line breaks, bold lines used as headings, and lists typed as separate
+    lines all come across properly. "Non-urgent advice:" no longer appears in front of
+    headings, empty headings are left out, text in capitals is turned into a normal sentence,
+    and links back to pages on your old website become plain text, because those pages will
+    not exist once your address moves.
+  - **Opening hours, address and practice code** are read from Practice365's contact cards and
+    SystmOnline links, and the main surgery is no longer mistaken for a branch.
+  - The preview shows each page as it will look, not as code.
+- **Your NHS profile link works.** The "Our NHS profile" link used to go to a page that does not
+  exist. It now goes to your practice's page on nhs.uk.
+- **The opening hours chart matches your hours.** It now runs from your opening time to your
+  closing time and labels both, rather than stopping at 5pm with the bar running past it.
+- **Smaller fixes.** The pill on the "Order a repeat prescription" tile is no longer cut off. The
+  Page wording tabs no longer show a scroll bar, and no longer make the page scroll sideways on
+  a phone.
+
+Nothing needs doing, and there are no new environment variables.
+
 ## 1.2.0 - 2026-09-21
 
 - **Your new website no longer starts with the demo practice's details in it.** The example

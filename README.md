@@ -167,11 +167,17 @@ JavaScript. Failed logins are rate limited to 8 attempts per 10 minutes per IP.
 Sections are ordered by how often a practice actually opens them, not by how the data is
 shaped, so "Notice banner" and "Opening hours" sit at the top.
 
-Body text uses a six-rule Markdown subset with a cheat sheet under every box. There is
-deliberately no rich text editor: staff paste from Word, the markup comes with it, and the page
-ends up with three fonts and a broken heading structure that fails accessibility. The renderer
-in `src/lib/markdown.tsx` emits React elements and never raw HTML, so there is no route from
-the admin panel to script injection on a patient-facing page.
+Body text is edited with formatting buttons over the text as it will look: heading,
+subheading, bold, link, bullet and numbered lists, and a callout. That is everything the site
+can show and nothing more. There is no font, colour, size or alignment, because those are where
+practice websites usually go wrong: staff paste from Word, the markup comes with it, and the
+page ends up with three fonts and a broken heading structure that fails accessibility. Anything
+typed or pasted is stored as the same small Markdown subset, so pasting from Word keeps the
+headings, lists, bold and links and drops the rest. **Edit as plain text** shows the Markdown
+for anyone who prefers it. See `src/components/admin/RichText.tsx`.
+
+The renderer in `src/lib/markdown.tsx` emits React elements and never raw HTML, so there is no
+route from the admin panel to script injection on a patient-facing page.
 
 ### Migration: reading your old website
 
@@ -190,20 +196,33 @@ What it can usually find:
 | Practice name | Structured data, Open Graph, or the page title |
 | Phone numbers | `tel:` links, then numbers in the text |
 | Email address | `mailto:` links, preferring nhs.net |
-| Address and postcode | Structured data, then the text around a postcode |
-| ODS code | Your online consultation link, which usually contains it |
-| Opening hours | Structured data, then tables, then lines of text |
+| Address and postcode | Structured data, the first contact card, then the text around a postcode |
+| ODS code | Your online consultation or SystmOnline link, which usually contains it |
+| Opening hours | Structured data, the first contact card, then tables, then lines of text |
 | Online service links | Recognised by supplier: Accurx, eConsult, PATCHS, Klinik, SystmOnline, Patient Access, the NHS App |
 | CQC report link | A link to cqc.org.uk |
 | Integrated Care Board | The phrase in your page text |
 | Logo | Structured data or an image marked as a logo, on your own domain |
-| Staff names | Guessed from your team page, and flagged as a guess |
+| Staff | Names, job titles and groups from your team pages' structure; a guess from prose otherwise |
 | Page wording | Converted to Markdown, matched to a template page, checked against NHS England guidance |
+| Policies | One offer per policy, from a policies folder or the expanders on an information page |
 
 It also offers **page wording**, matched to the pages this template already has: about,
 appointments, prescriptions, the service pages, patient group, carers, and the compliance pages.
-HTML is converted into the same Markdown subset the admin panel uses, with images, tables and
-forms dropped.
+HTML is converted into the same Markdown subset the admin panel uses (`src/lib/import/convert.ts`),
+with images and forms dropped and tables turned into lists. The conversion reads the page as a
+tree rather than hunting for paragraph tags, so text that suppliers leave loose inside a card,
+lines separated only by line breaks, and bold lines standing in for headings all come across as
+they read. Headings are ranked by how the page uses them rather than by tag, empty ones are
+dropped, and links back into the old site become plain text, since they stop working the day
+the address moves.
+
+Practice365 puts a dozen unrelated subjects on one "practice information" page, one expander
+each. Those pages are split: each expander is matched on its own, so the carers expander is
+offered for the carers page and the chaperone expander as a policy, and only what is left goes
+to the About page. **Policies** are offered one at a time, and each one ticked is added to the
+Practice policies page as its own section. One that covers ground the template already covers,
+such as chaperones, replaces that section rather than sitting beside it, and starts unticked.
 
 Two rules decide what starts ticked, and both exist to stop the template quietly becoming an
 ordinary website again:
@@ -228,8 +247,9 @@ Three things make this safe to use on a live site:
 
 **It will not find everything and it will sometimes be wrong.** It is reading pages written for
 people, not for machines. Check the opening hours and the phone number before you save: those
-are the two things a patient acts on immediately. Policies, page wording and practice news are
-not imported at all, because the template already ships compliant wording for those.
+are the two things a patient acts on immediately. Practice news is not imported, and the
+compliance pages and core policies start unticked, because the template already ships
+compliant wording for those.
 
 **When the old site will not let a server read it.** Some suppliers put their sites behind a
 firewall that challenges requests from data centres, which is where any server runs. The

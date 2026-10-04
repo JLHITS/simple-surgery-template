@@ -562,6 +562,16 @@ export function OnlineSection({ config, update }: SectionProps) {
           value={online.requestOpenNote}
           onChange={(requestOpenNote) => set({ requestOpenNote })}
         />
+        <Toggle
+          label='Show a "Contact us online" button at the top of every page'
+          hint={
+            online.requestUrl
+              ? 'It sits beside your phone number, so patients see the online route before they join the phone queue. On a phone it is the first thing in the menu.'
+              : 'Add your online request address above and the button appears beside your phone number.'
+          }
+          checked={online.showRequestInHeader}
+          onChange={(showRequestInHeader) => set({ showRequestInHeader })}
+        />
       </Fieldset>
 
       <Divider />

@@ -28,10 +28,13 @@ export type IconName =
   | 'chevron'
   | 'mail'
   | 'stethoscope'
+  | 'message'
 
 const PATHS: Record<IconName, string> = {
   calendar: 'M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z',
-  pill: 'M10.5 20.5a6.36 6.36 0 0 1-9-9l7-7a6.36 6.36 0 0 1 9 9ZM8.5 8.5l7 7',
+  // A capsule whose rounded ends stay inside the 24 unit box. The previous
+  // one's lower arc reached x = -0.4, so its left edge was cut off.
+  pill: 'm10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7ZM8.5 8.5l7 7',
   flask: 'M9 2v6.5L3.8 18A2 2 0 0 0 5.6 21h12.8a2 2 0 0 0 1.8-3L15 8.5V2M8 2h8M7.5 14h9',
   note: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Zm0 0v6h6M9 13h6M9 17h4',
   'user-plus': 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM19 8v6M22 11h-6',
@@ -51,6 +54,7 @@ const PATHS: Record<IconName, string> = {
   mail: 'M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2ZM22 7l-10 6L2 7',
   stethoscope:
     'M4 2v6a5 5 0 0 0 10 0V2M4 2h3M11 2h3M9 13v3a5 5 0 0 0 10 0v-1M19 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z',
+  message: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2ZM8 9h8M8 13h5',
 }
 
 interface IconProps extends Omit<SVGProps<SVGSVGElement>, 'name'> {

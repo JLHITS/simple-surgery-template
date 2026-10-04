@@ -5,6 +5,7 @@ import { Icon } from '@/components/Icon'
 import { getSiteConfig } from '@/lib/config'
 import { siteBase } from '@/lib/routing'
 import { renderMarkdown } from '@/lib/markdown'
+import { nhsProfileUrl } from '@/lib/practice'
 
 export const metadata: Metadata = {
   title: 'About the surgery',
@@ -62,7 +63,7 @@ export default async function AboutPage({ params }: Props) {
               </p>
               <p className="mt-1 text-2xl font-bold">{practice.odsCode}</p>
               <a
-                href={`https://www.nhs.uk/services/gp-surgery/${practice.odsCode}`}
+                href={nhsProfileUrl(practice)}
                 className="ss-link mt-1 inline-block text-sm"
               >
                 Our NHS profile

@@ -41,7 +41,9 @@ const WEEKDAYS: Weekday[] = [
 const LIMITS = {
   short: 200,
   medium: 1000,
-  long: 20_000,
+  // Room for a policies page that has had a practice's own policies brought
+  // across, each as its own section, beside the ones the template supplies.
+  long: 40_000,
   url: 2000,
   /** A base64 logo is allowed to be larger than a normal URL. */
   image: 1_200_000,
@@ -469,6 +471,7 @@ export function sanitiseConfig(input: unknown, fallback: SiteConfig): SiteConfig
     online: {
       requestUrl: url(online.requestUrl),
       requestOpenNote: str(online.requestOpenNote, '', LIMITS.medium),
+      showRequestInHeader: bool(online.showRequestInHeader, true),
       prescriptionUrl: url(online.prescriptionUrl),
       registrationUrl: url(online.registrationUrl, fallback.online.registrationUrl),
       nhsAppUrl: url(online.nhsAppUrl, fallback.online.nhsAppUrl),

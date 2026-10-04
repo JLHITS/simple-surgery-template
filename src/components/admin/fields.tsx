@@ -1,6 +1,7 @@
 'use client'
 
 import { useId, useRef, useState, type ReactNode } from 'react'
+import { RichTextEditor } from './RichText'
 
 /**
  * Form primitives for the admin panel.
@@ -101,67 +102,21 @@ export function TextArea({
 }
 
 /**
- * The body text editor.
+ * The body text editor: formatting buttons over the text as it will look.
  *
- * A plain textarea with a short cheat sheet underneath rather than a rich text
- * toolbar. Rich text editors are where practice websites go wrong: staff paste
- * from Word, the markup comes with it, and the page ends up with three fonts
- * and a broken heading structure that fails accessibility. Six rules of
- * Markdown produce clean, consistent, accessible output every time.
+ * The buttons only offer what the site can show, and anything pasted in is
+ * tidied down to the same, so staff get the ease of a word processor without
+ * the three fonts and broken headings a real one leaves behind. See
+ * RichText.tsx.
  */
-export function MarkdownArea({
-  label,
-  hint,
-  value,
-  onChange,
-  rows = 14,
-}: {
+export function MarkdownArea(props: {
   label: string
   hint?: string
   value: string
   onChange: (value: string) => void
   rows?: number
 }) {
-  return (
-    <div className="grid gap-1.5">
-      <TextArea label={label} hint={hint} value={value} onChange={onChange} rows={rows} />
-      <details className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2">
-        <summary className="cursor-pointer text-[0.8rem] font-semibold text-zinc-700">
-          How to format this text
-        </summary>
-        <dl className="mt-2 grid gap-1 text-[0.8rem] text-zinc-600">
-          <div className="flex gap-3">
-            <dt className="w-40 shrink-0 font-mono text-zinc-900">## Heading</dt>
-            <dd>A section heading</dd>
-          </div>
-          <div className="flex gap-3">
-            <dt className="w-40 shrink-0 font-mono text-zinc-900">### Smaller heading</dt>
-            <dd>A sub heading</dd>
-          </div>
-          <div className="flex gap-3">
-            <dt className="w-40 shrink-0 font-mono text-zinc-900">- Item</dt>
-            <dd>A bullet point</dd>
-          </div>
-          <div className="flex gap-3">
-            <dt className="w-40 shrink-0 font-mono text-zinc-900">1. Item</dt>
-            <dd>A numbered step</dd>
-          </div>
-          <div className="flex gap-3">
-            <dt className="w-40 shrink-0 font-mono text-zinc-900">**bold**</dt>
-            <dd>Bold text</dd>
-          </div>
-          <div className="flex gap-3">
-            <dt className="w-40 shrink-0 font-mono text-zinc-900">[label](https://...)</dt>
-            <dd>A link</dd>
-          </div>
-        </dl>
-        <p className="mt-2 text-[0.8rem] text-zinc-500">
-          Leave a blank line between paragraphs. Keep sentences under 20 words and paragraphs
-          under 3 sentences, which is what NHS England asks for.
-        </p>
-      </details>
-    </div>
-  )
+  return <RichTextEditor {...props} />
 }
 
 export function Toggle({
@@ -337,12 +292,21 @@ export function Tabs({ tabs, ariaLabel }: { tabs: TabDef[]; ariaLabel: string })
   }
 
   return (
-    <div>
+    // min-w-0, or the tabs' combined width sets the width of the whole form
+    // on a phone and the page scrolls sideways instead of the tabs.
+    <div className="min-w-0">
+      {/*
+       * The grey baseline is an inset shadow, and the tabs sit on it rather
+       * than hanging a pixel below it. With the tabs overlapping a real
+       * border, the strip was a pixel taller than its box, and because it
+       * scrolls sideways on a phone it scrolled up and down by that pixel too,
+       * showing a scroll bar under four tabs that fit with room to spare.
+       */}
       <div
         role="tablist"
         aria-label={ariaLabel}
         onKeyDown={onKeyDown}
-        className="-mx-1 flex gap-1 overflow-x-auto border-b border-zinc-200 px-1"
+        className="flex gap-1 overflow-x-auto overflow-y-hidden shadow-[inset_0_-1px_0_var(--color-zinc-200)] [scrollbar-width:thin]"
       >
         {tabs.map((tab) => {
           const selected = tab.key === active
@@ -359,7 +323,7 @@ export function Tabs({ tabs, ariaLabel }: { tabs: TabDef[]; ariaLabel: string })
               aria-controls={`${baseId}-panel-${tab.key}`}
               tabIndex={selected ? 0 : -1}
               onClick={() => setActive(tab.key)}
-              className={`-mb-px shrink-0 whitespace-nowrap border-b-2 px-3 py-2.5 text-[0.9rem] font-semibold transition ${
+              className={`shrink-0 whitespace-nowrap border-b-2 px-3 py-2.5 text-[0.9rem] font-semibold transition ${
                 selected
                   ? 'border-zinc-900 text-zinc-900'
                   : 'border-transparent text-zinc-500 hover:border-zinc-300 hover:text-zinc-800'

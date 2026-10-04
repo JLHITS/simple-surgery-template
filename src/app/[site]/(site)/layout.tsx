@@ -38,7 +38,7 @@ export default async function SiteLayout({ children, params }: Props) {
   }
 
   const config = await getSiteConfig(site)
-  const { practice, advanced } = config
+  const { practice, advanced, online } = config
   const base = siteBase(site)
 
   return (
@@ -52,6 +52,7 @@ export default async function SiteLayout({ children, params }: Props) {
         logoUrl={practice.logoUrl}
         logoAlt={practice.logoAlt}
         phone={practice.phone}
+        requestUrl={online.showRequestInHeader ? online.requestUrl : ''}
         showSearch={advanced.showSearch}
         showNhsLogo={advanced.showNhsLogo}
         base={base}

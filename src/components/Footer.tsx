@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { SiteConfig } from '@/lib/config/types'
 import { formatDateShort } from '@/lib/hours'
+import { nhsProfileUrl } from '@/lib/practice'
 import { NhsLogo } from './NhsLogo'
 import { SimpleSurgeryMark } from './SimpleSurgeryMark'
 
@@ -122,7 +123,7 @@ export function Footer({ config, base }: { config: SiteConfig; base: string }) {
               {practice.odsCode && (
                 <li>
                   <a
-                    href={`https://www.nhs.uk/services/gp-surgery/${practice.odsCode}`}
+                    href={nhsProfileUrl(practice)}
                     className="ss-link"
                   >
                     Our NHS profile page

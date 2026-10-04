@@ -7,7 +7,7 @@
  * update is available, and a number that does not match a changelog entry
  * would tell them something untrue.
  */
-export const TEMPLATE_VERSION = '1.2.0'
+export const TEMPLATE_VERSION = '1.3.0'
 
 /** Where self-hosted copies look for new releases. */
 export const DEFAULT_UPSTREAM = 'JLHITS/simple-surgery-template'

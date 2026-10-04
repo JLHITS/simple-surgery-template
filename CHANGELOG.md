@@ -8,6 +8,8 @@ Anything you have to do yourself is listed under **Action needed**.
 
 ## Unreleased
 
+## 1.3.0 - 2026-10-04
+
 - **Formatting buttons in the text editor.** Every page's wording now opens with buttons for
   headings, bold, links, bullet and numbered lists and callouts, over the text as it will look
   on your website. Select some words and press a button. Adding a link asks for the words and

@@ -1,171 +1,28 @@
-import { attr, tidy, toText } from './html'
+import { contentNode, expandersIn, isShouting, plainText, sentenceCase, toMarkdown, type ConvertOptions } from './convert'
+import { detach, findFirst, parseHtml, type DomNode, type ElementNode } from './dom'
+import { tidy } from './html'
 
 /**
  * Turning a page of somebody else's website into the template's Markdown.
  *
- * Two jobs. Find the part of the page that is actually the content, and convert
- * it into the six-rule Markdown subset the template renders. Both are lossy and
- * both are meant to be: the output is shown to a person who decides whether to
- * keep it.
+ * Three jobs. Find the part of the page that is actually the content, work out
+ * which of the template's pages it belongs to, and convert it into the Markdown
+ * subset the template renders (see convert.ts). All three are lossy and meant
+ * to be: the output is shown to a person who decides whether to keep it.
  *
- * What is deliberately thrown away: images, tables, embedded video, styling,
- * anything in a form. A practice moving suppliers wants its words, and the
- * template supplies the layout.
+ * What is deliberately thrown away: images, embedded video, styling, anything
+ * in a form. A practice moving suppliers wants its words, and the template
+ * supplies the layout.
  */
 
-/** Whole elements that are never content, removed before anything else. */
-const STRIP_ELEMENTS =
-  /<(script|style|noscript|svg|template|form|nav|header|footer|aside|iframe|video|audio|figure|button|select|table)\b[\s\S]*?<\/\1\s*>/gi
-
-/**
- * Wrappers whose contents are the page body, best first.
- *
- * Every supplier nests differently, but almost all of them land on one of
- * these. Finding the right container is what stops the menu and the cookie
- * banner being imported as practice content.
- */
-const CONTAINERS: RegExp[] = [
-  /<main\b[^>]*>([\s\S]*?)<\/main\s*>/i,
-  /<article\b[^>]*>([\s\S]*?)<\/article\s*>/i,
-  /<div\b[^>]*\b(?:id|class)\s*=\s*["'][^"']*\b(?:entry-content|page-content|post-content|main-content|content-area)\b[^"']*["'][^>]*>([\s\S]*?)<\/div\s*>/i,
-  /<div\b[^>]*\brole\s*=\s*["']main["'][^>]*>([\s\S]*?)<\/div\s*>/i,
-  /<div\b[^>]*\bid\s*=\s*["'](?:content|main)["'][^>]*>([\s\S]*?)<\/div\s*>/i,
-]
-
-/** Lines that are supplier furniture rather than practice content. */
-const BOILERPLATE =
-  /^(skip to (main )?content|cookie|we use cookies|accept all|back to top|share this|print this page|last updated|page last reviewed|search|menu|home|toggle navigation|website (design|supplied|powered) by|©|copyright|all rights reserved|designed and (built|developed) by|privacy and cookies)\b/i
-
-/**
- * Finds the content region, or falls back to the whole body.
- *
- * The fallback matters: plenty of older practice sites have no semantic
- * container at all, and refusing to read those would rule out exactly the
- * suppliers people most want to leave.
- */
-function contentRegion(html: string): string {
-  const body = /<body\b[^>]*>([\s\S]*?)<\/body\s*>/i.exec(html)
-  const source = body ? body[1] : html
-  const cleaned = source.replace(STRIP_ELEMENTS, ' ').replace(/<!--[\s\S]*?-->/g, ' ')
-
-  for (const pattern of CONTAINERS) {
-    const m = pattern.exec(cleaned)
-    // A container with almost nothing in it is the wrong container.
-    if (m && m[1] && toText(m[1]).length > 200) return m[1]
-  }
-
-  return cleaned
+/** The options every imported page is converted with. */
+function importOptions(base: string, dropTitle: string, top: 2 | 3 = 2): ConvertOptions {
+  return { base, findContent: false, tidy: true, promoteBold: true, dropTitle, top, rankHeadings: true }
 }
 
-/** Inline markup, converted before the block structure is walked. */
-function inlineToMarkdown(html: string, base: string): string {
-  let out = html
-
-  out = out.replace(/<(strong|b)\b[^>]*>([\s\S]*?)<\/\1\s*>/gi, (_, __, inner: string) => {
-    const text = tidy(toText(inner))
-    return text ? `**${text}**` : ''
-  })
-
-  out = out.replace(/<a\b([^>]*)>([\s\S]*?)<\/a\s*>/gi, (whole, attrs: string, inner: string) => {
-    const text = tidy(toText(inner))
-    if (!text) return ''
-
-    const raw = attr(attrs, 'href')
-    if (!raw) return text
-
-    let href = raw
-    if (!/^(mailto|tel):/i.test(raw)) {
-      try {
-        href = new URL(raw, base).toString()
-      } catch {
-        return text
-      }
-    }
-
-    // The renderer only allows these, so anything else becomes plain text
-    // rather than a link that silently disappears.
-    if (!/^(https?:\/\/|mailto:|tel:|\/|#)/i.test(href)) return text
-    // A link whose text is the URL reads badly twice over.
-    return text === href ? href : `[${text}](${href})`
-  })
-
-  return out
-}
-
-/**
- * Converts a content region into the template's Markdown subset.
- *
- * Handled: h2 to h6 as headings, paragraphs, unordered and ordered lists,
- * blockquotes, bold and links. Everything else becomes a paragraph or is
- * dropped.
- */
+/** A whole page, converted. Kept for callers that only want the Markdown. */
 export function htmlToMarkdown(html: string, base: string): string {
-  const source = inlineToMarkdown(contentRegion(html), base)
-  const blocks: string[] = []
-
-  // Walk the block-level elements in document order. Anything not matched by
-  // this is not structure worth keeping.
-  const BLOCK =
-    /<(h[1-6]|p|li|blockquote|dt|dd)\b([^>]*)>([\s\S]*?)<\/\1\s*>|<(ul|ol)\b[^>]*>/gi
-
-  let listType: 'ul' | 'ol' = 'ul'
-  let m: RegExpExecArray | null
-
-  while ((m = BLOCK.exec(source)) !== null) {
-    if (m[4]) {
-      listType = m[4].toLowerCase() === 'ol' ? 'ol' : 'ul'
-      continue
-    }
-
-    const tag = (m[1] || '').toLowerCase()
-    const text = tidy(toText(m[3] || ''))
-
-    if (!text || BOILERPLATE.test(text)) continue
-
-    switch (tag) {
-      case 'h1':
-      case 'h2':
-        blocks.push(`## ${text}`)
-        break
-      case 'h3':
-      case 'h4':
-      case 'h5':
-      case 'h6':
-        blocks.push(`### ${text}`)
-        break
-      case 'li':
-        blocks.push(listType === 'ol' ? `1. ${text}` : `- ${text}`)
-        break
-      case 'blockquote':
-        blocks.push(`> ${text}`)
-        break
-      case 'dt':
-        blocks.push(`### ${text}`)
-        break
-      default:
-        blocks.push(text)
-    }
-  }
-
-  return joinBlocks(blocks)
-}
-
-/** Blank lines between blocks, but not between consecutive list items. */
-function joinBlocks(blocks: string[]): string {
-  const out: string[] = []
-
-  for (const block of blocks) {
-    const isItem = /^(-|\d+\.)\s/.test(block)
-    const lastIsItem = out.length > 0 && /^(-|\d+\.)\s/.test(out[out.length - 1])
-
-    if (out.length && !(isItem && lastIsItem)) out.push('')
-    out.push(block)
-  }
-
-  return out
-    .join('\n')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim()
+  return toMarkdown(html, { ...importOptions(base, ''), findContent: true })
 }
 
 /* ------------------------------------------------------- matching to pages */
@@ -178,7 +35,11 @@ export interface PageTarget {
   /** The config field, or the slug of the page or service. */
   key: string
   label: string
-  /** URL and title fragments that identify this page on somebody else's site. */
+  /**
+   * URL and title fragments that identify this page on somebody else's site.
+   * Written to match both a URL slug and a heading: "gp-earnings" and
+   * "GP Earnings" are the same page.
+   */
   pattern: RegExp
   /**
    * True where the template writes this page to meet a legal or contractual
@@ -203,74 +64,77 @@ export interface PageTarget {
 export const STATUTORY_WARNING =
   'The page we supply is written against current NHS England, CQC and Information Commissioner guidance, and we keep it that way as the rules change. The page on your old site was very often written by your previous supplier for every practice on their platform, not by you, and nobody has updated it since. Bringing it across replaces wording we maintain with wording that is already as old as the site you are leaving.'
 
+/** The caution on a policy that covers ground the template already covers. */
+export const CORE_POLICY_CAUTION =
+  'Chaperone, zero tolerance, confidentiality and data sharing policies are CQC expectations, and the template keeps its own versions current. Bringing yours across replaces ours on your Practice policies page.'
 
 export const TARGETS: PageTarget[] = [
   {
     kind: 'contentField',
     key: 'appointmentsBody',
     label: 'Appointments',
-    pattern: /appointment|book|consultation|see-a-(gp|doctor)/i,
+    pattern: /appointment|book|consultation|see[\s-]a[\s-](gp|doctor)/i,
   },
   {
     kind: 'contentField',
     key: 'prescriptionsBody',
     label: 'Prescriptions',
-    pattern: /prescription|repeat-medic|medication/i,
+    pattern: /prescription|repeat[\s-]medic|medication/i,
   },
   {
     kind: 'contentField',
     key: 'aboutBody',
     label: 'About the surgery',
-    pattern: /about|practice-info|surgery-info|who-we-are|welcome/i,
+    pattern: /about|practice[\s-]info|surgery[\s-]info|who[\s-]we[\s-]are|welcome/i,
   },
   {
     kind: 'service',
     key: 'test-results',
     label: 'Test results',
-    pattern: /test-result|results|blood-test/i,
+    pattern: /test[\s-]results?|results|blood[\s-]tests?/i,
   },
-  { kind: 'service', key: 'fit-notes', label: 'Fit notes', pattern: /fit-note|sick-note|sicknote/i },
+  { kind: 'service', key: 'fit-notes', label: 'Fit notes', pattern: /(fit|sick)[\s-]?notes?/i },
   {
     kind: 'service',
     key: 'register',
     label: 'Registering with the practice',
-    pattern: /register|new-patient|joining/i,
+    pattern: /register|new[\s-]patients?|joining/i,
   },
   {
     kind: 'service',
     key: 'vaccinations',
     label: 'Vaccinations',
-    pattern: /vaccinat|immunis|flu-jab|covid/i,
+    pattern: /vaccinat|immunis|flu[\s-]jab|covid/i,
   },
   {
     kind: 'service',
     key: 'clinics',
     label: 'Clinics and long term conditions',
-    pattern: /clinic|long-term|chronic|diabet|asthma/i,
+    pattern: /clinic\b|clinics|long[\s-]term|chronic|diabet|asthma/i,
   },
   {
     kind: 'service',
     key: 'self-referral',
     label: 'Referring yourself',
-    pattern: /self-refer|refer-yourself/i,
+    pattern: /self[\s-]refer|refer[\s-]yourself/i,
   },
   {
     kind: 'service',
     key: 'proxy-access',
     label: 'Help someone else with their care',
-    pattern: /proxy|carer-access|on-behalf/i,
+    pattern: /proxy|carer[\s-]access|on[\s-]behalf/i,
   },
   {
     kind: 'service',
     key: 'online-services',
     label: 'Managing your health online',
-    pattern: /online-service|online-access|patient-online/i,
+    pattern: /online[\s-]services?|online[\s-]access|patient[\s-]online/i,
   },
   {
     kind: 'page',
     key: 'patient-group',
     label: 'Patient Participation Group',
-    pattern: /patient-(participation|group)|\bppg\b/i,
+    pattern: /patient[\s-](participation|group)|\bppg\b/i,
   },
   { kind: 'page', key: 'carers', label: 'Support for carers', pattern: /carer/i },
 
@@ -281,16 +145,15 @@ export const TARGETS: PageTarget[] = [
     key: 'policies',
     label: 'Practice policies',
     // Not "website policies", which is where suppliers put cookie notices.
-    pattern: /practice-polic|surgery-polic|chaperone|zero-tolerance|violence|confidentiality/i,
+    pattern: /practice[\s-]polic|surgery[\s-]polic|chaperone|zero[\s-]tolerance|violence|confidentiality/i,
     statutory: true,
-    caution:
-      'Chaperone, zero tolerance and data sharing policies are CQC expectations, and the template keeps them current.',
+    caution: CORE_POLICY_CAUTION,
   },
   {
     kind: 'page',
     key: 'complaints',
     label: 'Complaints and feedback',
-    pattern: /complaint|concerns?-procedure/i,
+    pattern: /complaint|concerns?[\s-]procedure/i,
     statutory: true,
     caution:
       'Complaints about a GP practice go to your Integrated Care Board, and have since July 2023. Most older pages still send patients to NHS England, which no longer handles them.',
@@ -299,7 +162,9 @@ export const TARGETS: PageTarget[] = [
     kind: 'page',
     key: 'privacy',
     label: 'Privacy notice',
-    pattern: /privacy|data-protection|gdpr|fair-processing/i,
+    // Hyphenated deliberately: a "Data Protection" section on a policies page
+    // is a policy, but a page at /data-protection/ is the privacy notice.
+    pattern: /privacy|data-protection|gdpr|fair[\s-]processing/i,
     statutory: true,
     caution:
       'A privacy notice has to describe your own processing. The template gives you a current draft to adapt rather than an old one to inherit.',
@@ -308,7 +173,7 @@ export const TARGETS: PageTarget[] = [
     kind: 'page',
     key: 'accessibility',
     label: 'Accessibility statement',
-    pattern: /accessib/i,
+    pattern: /accessibility/i,
     statutory: true,
     caution:
       'An accessibility statement describes the website it is published on. Yours describes your old website, and would be wrong here from the day you go live.',
@@ -317,7 +182,7 @@ export const TARGETS: PageTarget[] = [
     kind: 'page',
     key: 'freedom-of-information',
     label: 'Freedom of information',
-    pattern: /freedom-of-information|foi|publication-scheme/i,
+    pattern: /freedom[\s-]of[\s-]information|\bfoi\b|publication[\s-]scheme/i,
     statutory: true,
     caution:
       'The template ships the publication scheme guide and charging schedule the Information Commissioner expects. Most older pages list the seven categories and stop there.',
@@ -326,7 +191,7 @@ export const TARGETS: PageTarget[] = [
     kind: 'page',
     key: 'named-gp',
     label: 'Your named GP',
-    pattern: /named-gp|accountable-gp/i,
+    pattern: /named[\s-](accountable[\s-])?gp|accountable[\s-]gp/i,
     statutory: true,
     caution: 'The wording the template supplies already meets the contractual requirement.',
   },
@@ -334,7 +199,7 @@ export const TARGETS: PageTarget[] = [
     kind: 'page',
     key: 'gp-earnings',
     label: 'GP earnings',
-    pattern: /gp-earning|net-earnings/i,
+    pattern: /gp[\s-]earning|net[\s-]earnings/i,
     statutory: true,
     caution:
       'The figures must be for the most recent year. An imported page carries whatever year your old site last published, and the template takes the figures from Compliance instead.',
@@ -343,12 +208,29 @@ export const TARGETS: PageTarget[] = [
     kind: 'page',
     key: 'patient-charter',
     label: 'You and your general practice',
-    pattern: /patient-charter|you-and-your-general-practice|patients-charter/i,
+    pattern: /patients?['’]?[\s-]charter|you[\s-]and[\s-]your[\s-]general[\s-]practice/i,
     statutory: true,
     caution:
       'Your contract requires this page to link to NHS England’s own document. The template does. An imported page almost certainly will not.',
   },
 ]
+
+/** Where every policy goes. Each one becomes a section of this page. */
+export const POLICIES_TARGET = TARGETS.find((t) => t.key === 'policies') as PageTarget
+
+/**
+ * What a practice policy looks like, by its address or its title.
+ *
+ * Practice365 keeps these in a /policies/ folder, or as expanders on a
+ * "practice information" page, and they are practice specific: a sedation for
+ * flying policy or a fee for seat belt exemptions is nothing the template could
+ * write for them. They used to be either ignored or swept into the About page.
+ */
+const POLICY =
+  /polic(y|ies)|chaperon|zero[\s-]?tolerance|violen|aggressi|confidential|data[\s-]?(protection|sharing)|personal[\s-]?data|summary[\s-]?care[\s-]?record|fear[\s-]?of[\s-]?flying|diazepam|benzodiazepine|seat[\s-]?belt|extreme[\s-]?sports?|non[\s-]?nhs|private[\s-]?(work|fees?)|\bfees\b|removal[\s-](from|of)|did[\s-]?not[\s-]?attend|\bdnas?\b|missed[\s-]?appointments?|\bconsent\b|cctv|social[\s-]?media|patient[\s-](rights|responsibilit)|firearms?|medical[\s-](certificates|reports)|certificates/i
+
+/** A policies folder: /policies/, /practice-policies/, /our-policies/. */
+const POLICY_FOLDER = /\/[\w-]*polic(y|ies)\//i
 
 /**
  * Sections that are never a template page, whatever their words say.
@@ -360,21 +242,50 @@ export const TARGETS: PageTarget[] = [
 const NEVER_A_PAGE =
   /\/(news|blog|events?|articles?|category|categories|tag|tags|author|archives?|search|form|forms|feed|comments?|attachment|wp-content)(\/|$)/i
 
-/** The first target a URL and title match, or null. */
+/** "Policy" in the name, or a policies folder: a policy whatever else it says. */
+const NAMED_POLICY = /polic(y|ies)/i
+
+/**
+ * The template page a URL or a heading belongs to, or null.
+ *
+ * In order: compliance pages, so "Privacy policy" is the privacy notice rather
+ * than a policy. The specific services and pages, so "Carers information" in
+ * a policies folder is still the carers page. Then policies, by name, folder
+ * or subject, so "Missed appointments policy" is not the appointments page.
+ * Last the three general pages, which match almost anything.
+ */
 export function targetFor(url: string, pageTitle: string): PageTarget | null {
   let path = url
   try {
     path = new URL(url).pathname
   } catch {
-    /* use the whole string */
+    /* use the whole string, which may be empty for a section heading */
   }
 
   if (NEVER_A_PAGE.test(path)) return null
 
   const leaf = path.replace(/\/$/, '').split('/').pop() || ''
   const haystack = `${leaf} ${pageTitle}`
-  return TARGETS.find((target) => target.pattern.test(haystack)) || null
+  const matches = (t: PageTarget) => t.pattern.test(haystack)
+
+  const statutory = TARGETS.find((t) => t.statutory && t !== POLICIES_TARGET && matches(t))
+  if (statutory) return statutory
+
+  const specific = TARGETS.find((t) => !t.statutory && t.kind !== 'contentField' && matches(t))
+  if (specific) return specific
+
+  if (NAMED_POLICY.test(haystack) || POLICY_FOLDER.test(path)) return POLICIES_TARGET
+  if (POLICY.test(haystack) || matches(POLICIES_TARGET)) return POLICIES_TARGET
+
+  return TARGETS.find((t) => t.kind === 'contentField' && matches(t)) || null
 }
+
+/** True for the page or section that should be offered as a policy. */
+export function isPolicyTarget(target: PageTarget | null | undefined): boolean {
+  return target === POLICIES_TARGET
+}
+
+/* ---------------------------------------------------------------- wording */
 
 /**
  * Wording the template deliberately avoids, and why.
@@ -445,56 +356,257 @@ export function checkWording(markdown: string): WordingIssue[] {
   return issues
 }
 
-export interface ImportedPage {
-  target: PageTarget
-  sourceUrl: string
-  sourceTitle: string
+/* ------------------------------------------------------------ the offers */
+
+interface Converted {
   markdown: string
   wordCount: number
-  /** First couple of lines, for the review list. */
+  /** First couple of lines, as plain text, for the review list. */
   excerpt: string
   /** Where the imported wording departs from the guidance the template follows. */
   issues: WordingIssue[]
 }
 
+export interface ImportedPage extends Converted {
+  target: PageTarget
+  sourceUrl: string
+  sourceTitle: string
+}
+
+/** One policy, offered as a section of the Practice policies page. */
+export interface ImportedPolicy extends Converted {
+  /** Its heading on the policies page. */
+  title: string
+  /** Stable across scans, and shared by two copies of the same policy. */
+  key: string
+  /** Covers ground the template's own policies page already covers. */
+  core: boolean
+  sourceUrl: string
+}
+
 /** Roughly what the sanitiser will accept for a long body. */
-const MAX_BODY = 18_000
+const MAX_BODY = 38_000
 
-/**
- * Converts one crawled page into something offerable, or returns null.
- *
- * Rejects anything too short to be worth importing, and anything that is mostly
- * links, which is how a navigation page looks once the markup is gone.
- */
-export function toImportedPage(
-  html: string,
-  url: string,
-  pageTitle: string,
-  target: PageTarget,
-): ImportedPage | null {
-  const markdown = htmlToMarkdown(html, url).slice(0, MAX_BODY)
-  if (!markdown) return null
+/** Fewer words than this is a fragment, not a page. */
+const MIN_PAGE_WORDS = 40
+const MIN_SECTION_WORDS = 20
 
-  const words = markdown.split(/\s+/).filter(Boolean)
-  if (words.length < 40) return null
+function finish(markdown: string, minWords: number): Converted | null {
+  const body = markdown.slice(0, MAX_BODY).trim()
+  if (!body) return null
 
-  const linkCount = (markdown.match(/\]\(/g) || []).length
+  const words = body.split(/\s+/).filter(Boolean)
+  if (words.length < minWords) return null
+
+  // Mostly links is how a navigation page looks once the markup is gone.
+  const linkCount = (body.match(/\]\(/g) || []).length
   if (linkCount > 0 && words.length / linkCount < 8) return null
 
-  const excerpt = markdown
+  const excerpt = body
     .split('\n')
     .filter((line) => line.trim() && !line.startsWith('#'))
     .slice(0, 2)
     .join(' ')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/\*\*/g, '')
+    .replace(/^([->]|\d+\.)\s+/gm, '')
     .slice(0, 220)
 
+  return { markdown: body, wordCount: words.length, excerpt, issues: checkWording(body) }
+}
+
+/** A heading as the template would write it. */
+function cleanTitle(text: string): string {
+  const title = tidy(text).replace(/\s*:\s*$/, '')
+  return isShouting(title) ? sentenceCase(title) : title
+}
+
+function policyKey(title: string): string {
+  return (
+    title
+      .toLowerCase()
+      .replace(/&/g, 'and')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .replace(/-?polic(y|ies)$/, '') || 'policy'
+  )
+}
+
+export type PolicyTopic = 'chaperone' | 'violence' | 'confidentiality' | 'data'
+
+/** The part of the template's policies page a policy covers, if any. */
+export function policyTopic(title: string): PolicyTopic | null {
+  const t = title.toLowerCase()
+  if (/chaperon/.test(t)) return 'chaperone'
+  if (/violen|zero[\s-]?tolerance|aggress|abus|removal/.test(t)) return 'violence'
+  if (/confidential/.test(t)) return 'confidentiality'
+  if (/\bdata\b|gdpr|summary care record|information sharing/.test(t)) return 'data'
+  return null
+}
+
+function toPolicy(title: string, sourceUrl: string, converted: Converted): ImportedPolicy {
+  const clean = cleanTitle(title)
   return {
-    target,
-    sourceUrl: url,
-    sourceTitle: pageTitle,
-    markdown,
-    wordCount: words.length,
-    excerpt,
-    issues: checkWording(markdown),
+    ...converted,
+    title: clean,
+    key: policyKey(clean),
+    core: policyTopic(clean) !== null,
+    sourceUrl,
   }
+}
+
+/** A page's own name: its main heading, or failing that its title tag. */
+function pageHeading(root: ElementNode, region: ElementNode, documentTitle: string): string {
+  const h1 = findFirst(region, (el) => el.tag === 'h1') || findFirst(root, (el) => el.tag === 'h1')
+  const heading = h1 ? plainText(h1) : ''
+  if (heading && heading.length <= 120) return heading
+  return tidy(documentTitle.split(/\s[|–—»-]\s/)[0] || documentTitle)
+}
+
+/** "Practice policies" or "Our policies": a page that holds several. */
+const GENERIC_POLICIES = /^(our\s+)?((practice|surgery)\s+)?polic(y|ies)\b/i
+
+/**
+ * Converts one crawled page into what can be offered from it.
+ *
+ * Usually that is one page of wording. Two cases give more:
+ *
+ *   A hub page, like Practice365's "Practice information", holding a dozen
+ *   expanders on unrelated subjects. Each expander is matched on its own, so
+ *   the carers expander is offered for the carers page and the chaperone
+ *   expander as a policy, and only what is left goes to the hub's own target.
+ *
+ *   A policy page, which becomes a policy rather than replacing the template's
+ *   whole policies page. A general "Practice policies" page with a heading per
+ *   policy becomes one policy per heading.
+ */
+export function importPage(
+  html: string,
+  url: string,
+  documentTitle: string,
+  target: PageTarget,
+): { pages: ImportedPage[]; policies: ImportedPolicy[] } {
+  const pages: ImportedPage[] = []
+  const policies: ImportedPolicy[] = []
+
+  const root = parseHtml(html)
+  const region = contentNode(root)
+  const heading = pageHeading(root, region, documentTitle)
+
+  // A page filed under /policies/ whose own heading names a specific page,
+  // like "Carers information", belongs to that page.
+  const named = heading ? targetFor('', heading) : null
+  if (isPolicyTarget(target) && named && !isPolicyTarget(named) && named.kind !== 'contentField') {
+    target = named
+  }
+
+  // Hub pages: three or more expanders, at least two of which belong
+  // somewhere other than the page they sit on.
+  const expanders = expandersIn(region).map((expander) => ({
+    expander,
+    target: targetFor('', expander.title),
+  }))
+  const elsewhere = expanders.filter(({ target: t }) => t && (t.key !== target.key || isPolicyTarget(t)))
+
+  if (expanders.length >= 3 && elsewhere.length >= 2) {
+    for (const { expander, target: sectionTarget } of elsewhere) {
+      detach(expander.element)
+      const nodes: DomNode[] = expander.body
+      const title = cleanTitle(expander.title)
+
+      if (isPolicyTarget(sectionTarget)) {
+        const converted = finish(toMarkdown(nodes, importOptions(url, title, 3)), MIN_SECTION_WORDS)
+        if (converted) policies.push(toPolicy(title, url, converted))
+        continue
+      }
+
+      const converted = finish(toMarkdown(nodes, importOptions(url, title)), MIN_SECTION_WORDS)
+      if (converted && sectionTarget) {
+        pages.push({ ...converted, target: sectionTarget, sourceUrl: url, sourceTitle: `${heading}: ${title}` })
+      }
+    }
+
+    // What is left is the hub's own wording, unless the hub is a policies
+    // page, whose introduction is not a policy of its own.
+    if (!isPolicyTarget(target)) {
+      const converted = finish(toMarkdown(region, importOptions(url, heading)), MIN_PAGE_WORDS)
+      if (converted) pages.push({ ...converted, target, sourceUrl: url, sourceTitle: heading })
+    }
+
+    return { pages, policies }
+  }
+
+  if (isPolicyTarget(target)) {
+    // A page of several policies, one heading each.
+    const whole = toMarkdown(region, importOptions(url, heading))
+    const sections = whole.split(/^## /m).slice(1)
+    if (GENERIC_POLICIES.test(heading) && sections.length >= 2) {
+      for (const section of sections) {
+        const [first, ...rest] = section.split('\n')
+        const converted = finish(rest.join('\n').trim(), MIN_SECTION_WORDS)
+        if (converted) policies.push(toPolicy(first, url, converted))
+      }
+      return { pages, policies }
+    }
+
+    const converted = finish(toMarkdown(region, importOptions(url, heading, 3)), MIN_SECTION_WORDS)
+    if (converted) policies.push(toPolicy(heading, url, converted))
+    return { pages, policies }
+  }
+
+  const converted = finish(toMarkdown(region, importOptions(url, heading)), MIN_PAGE_WORDS)
+  if (converted) pages.push({ ...converted, target, sourceUrl: url, sourceTitle: heading || documentTitle })
+  return { pages, policies }
+}
+
+/* ------------------------------------------------- the policies page itself */
+
+/**
+ * The headings on the template's own policies page, and what each covers.
+ *
+ * Only these are ever replaced. An imported "Data protection" policy replaces
+ * the template's "Data sharing" section, but a second imported data policy
+ * must not then replace the first.
+ */
+const TEMPLATE_POLICY_SECTIONS: Record<string, PolicyTopic> = {
+  chaperones: 'chaperone',
+  'zero tolerance': 'violence',
+  confidentiality: 'confidentiality',
+  'data sharing': 'data',
+  'violence and removal from the list': 'violence',
+}
+
+function normHeading(text: string): string {
+  return text.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, ' ').trim()
+}
+
+/**
+ * Adds one policy to the body of the Practice policies page.
+ *
+ * It goes on the end as its own section. Where it covers ground one of the
+ * template's sections covers, that section is taken out, so the page never
+ * says two different things about chaperones. Bringing the same policy across
+ * twice replaces it rather than adding it again.
+ */
+export function mergePolicySection(body: string, title: string, markdown: string): string {
+  const sections: { heading: string | null; lines: string[] }[] = [{ heading: null, lines: [] }]
+  for (const line of (body || '').replace(/\r\n/g, '\n').split('\n')) {
+    if (line.startsWith('## ')) sections.push({ heading: line.slice(3).trim(), lines: [line] })
+    else sections[sections.length - 1].lines.push(line)
+  }
+
+  const topic = policyTopic(title)
+  const kept = sections.filter((section) => {
+    if (section.heading === null) return true
+    const heading = normHeading(section.heading)
+    if (heading === normHeading(title)) return false
+    return !(topic && TEMPLATE_POLICY_SECTIONS[heading] === topic)
+  })
+
+  const existing = kept
+    .map((section) => section.lines.join('\n'))
+    .join('\n')
+    .trim()
+  const added = `## ${title}\n\n${markdown.replace(/^## /gm, '### ').trim()}`
+  return existing ? `${existing}\n\n${added}` : added
 }

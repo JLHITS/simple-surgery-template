@@ -1,4 +1,4 @@
-import { targetFor } from './content'
+import { isPolicyTarget, targetFor } from './content'
 import { scoreFor, type CrawledPage } from './crawl'
 import { FetchRefused, isBotChallengeHtml, normaliseUrl } from './fetch'
 import { title } from './html'
@@ -163,7 +163,8 @@ export function pagesFromUploads(siteInput: string, uploads: UploadedPage[]): Ma
     let target = targetFor(page.url.toString(), page.title) ?? undefined
 
     // One page per destination, as in the crawl. The first one given wins.
-    if (target && takenTargets.has(target.key)) target = undefined
+    // Policies are the exception: each one is offered on its own.
+    if (target && !isPolicyTarget(target) && takenTargets.has(target.key)) target = undefined
     if (target) takenTargets.add(target.key)
 
     pages.push({

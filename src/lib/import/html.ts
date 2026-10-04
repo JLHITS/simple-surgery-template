@@ -28,13 +28,52 @@ const ENTITIES: Record<string, string> = {
   hellip: '…',
   bull: '•',
   middot: '·',
+  // Thin and fixed-width spaces. Practice365's opening hours read
+  // "8:00 am&thinsp;to&thinsp;6:30 pm", and an undecoded &thinsp; was why none
+  // of them could be read.
+  thinsp: ' ',
+  ensp: ' ',
+  emsp: ' ',
+  hairsp: ' ',
+  zwsp: '',
+  zwj: '',
+  zwnj: '',
+  shy: '',
+  lrm: '',
+  rlm: '',
+  copy: '©',
+  reg: '®',
+  trade: '™',
+  deg: '°',
+  times: '×',
+  frac12: '½',
+  frac14: '¼',
+  frac34: '¾',
+  rarr: '→',
+  larr: '←',
+  laquo: '«',
+  raquo: '»',
+  sbquo: '‚',
+  bdquo: '„',
+  euro: '€',
+  eacute: 'é',
+  egrave: 'è',
+  aacute: 'á',
+  agrave: 'à',
+  iacute: 'í',
+  oacute: 'ó',
+  uacute: 'ú',
+  ouml: 'ö',
+  uuml: 'ü',
+  auml: 'ä',
+  ccedil: 'ç',
 }
 
 export function decodeEntities(value: string): string {
   return value
     .replace(/&#x([0-9a-f]+);/gi, (_, hex) => safeCodePoint(parseInt(hex, 16)))
     .replace(/&#(\d+);/g, (_, dec) => safeCodePoint(parseInt(dec, 10)))
-    .replace(/&([a-z]+);/gi, (whole, name: string) => ENTITIES[name.toLowerCase()] ?? whole)
+    .replace(/&([a-z][a-z0-9]*);/gi, (whole, name: string) => ENTITIES[name] ?? ENTITIES[name.toLowerCase()] ?? whole)
 }
 
 function safeCodePoint(code: number): string {
@@ -48,7 +87,7 @@ function safeCodePoint(code: number): string {
 
 /** Collapses runs of whitespace and trims. */
 export function tidy(value: string): string {
-  return decodeEntities(value).replace(/\s+/g, ' ').trim()
+  return decodeEntities(value).replace(/[​-‍⁠﻿­]/g, '').replace(/\s+/g, ' ').trim()
 }
 
 /** Strips script, style and all tags, leaving readable text with line breaks. */

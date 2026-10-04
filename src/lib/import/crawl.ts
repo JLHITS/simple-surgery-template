@@ -1,4 +1,4 @@
-import { targetFor, type PageTarget } from './content'
+import { isPolicyTarget, targetFor, type PageTarget } from './content'
 import { anchors, tidy } from './html'
 import { FetchBlocked, fetchPage, normaliseUrl, type FetchedPage } from './fetch'
 import { wordpressReader, type WordPressReader } from './wordpress'
@@ -28,6 +28,16 @@ const MAX_FACT_PAGES = 10
  * pages, and at a tenth of a second each it is not a burden on their server.
  */
 const MAX_CONTENT_PAGES = 20
+
+/**
+ * Policy pages, which unlike every other kind are wanted several at a time:
+ * each one becomes its own section of the practice's policies page. A
+ * Practice365 site typically has eight to twelve.
+ */
+const MAX_POLICY_PAGES = 15
+
+/** Kinds read more than once. Staff are often split across several pages. */
+const PAGES_PER_KIND: Partial<Record<PageKind, number>> = { team: 3 }
 
 /** URL or link-text fragments worth following, best first. */
 const WANTED: { pattern: RegExp; score: number; kind: PageKind }[] = [
@@ -165,17 +175,19 @@ class PagePlan {
   }
 
   /**
-   * One page per kind, best scoring first. Six "meet the team" pages teach us
-   * nothing the first one did not.
+   * One page per kind, best scoring first, except staff, which practices
+   * often split into doctors, nurses and the rest of the team. Six contact
+   * pages teach us nothing the first one did not.
    */
   factPages(): [string, PageKind][] {
-    const takenKinds = new Set<PageKind>()
+    const taken = new Map<PageKind, number>()
     const out: [string, PageKind][] = []
 
     const ranked = [...this.candidates.entries()].sort((a, b) => b[1].score - a[1].score)
     for (const [url, { kind }] of ranked) {
-      if (takenKinds.has(kind)) continue
-      takenKinds.add(kind)
+      const count = taken.get(kind) || 0
+      if (count >= (PAGES_PER_KIND[kind] ?? 1)) continue
+      taken.set(kind, count + 1)
       out.push([url, kind])
       if (out.length >= MAX_FACT_PAGES - 1) break
     }
@@ -187,18 +199,35 @@ class PagePlan {
    * One page per template target, so a practice is never asked to choose
    * between three candidates for the same destination. The first match wins,
    * and the sitemap is ordered the way the site is.
+   *
+   * Policies are the exception: every policy page is wanted, up to a limit,
+   * because each one is offered separately.
    */
-  contentPages(takenTargets: Set<string>, skip: Set<string>): [string, PageTarget][] {
+  contentPages(
+    takenTargets: Set<string>,
+    skip: Set<string>,
+    policyLimit = MAX_POLICY_PAGES,
+  ): [string, PageTarget][] {
     const out: [string, PageTarget][] = []
+    let pages = 0
+    let policies = 0
 
     for (const [url, text] of this.known) {
-      if (out.length >= MAX_CONTENT_PAGES) break
       if (skip.has(url) || this.fetched.has(url)) continue
 
       const target = targetFor(url, text)
-      if (!target || takenTargets.has(target.key)) continue
+      if (!target) continue
 
+      if (isPolicyTarget(target)) {
+        if (policies >= policyLimit) continue
+        policies += 1
+        out.push([url, target])
+        continue
+      }
+
+      if (pages >= MAX_CONTENT_PAGES || takenTargets.has(target.key)) continue
       takenTargets.add(target.key)
+      pages += 1
       out.push([url, target])
     }
 
@@ -298,15 +327,11 @@ export async function crawl(input: string): Promise<CrawledPage[]> {
     if (page.target) takenTargets.add(page.target.key)
   }
 
-  let contentFetched = 0
   for (const [url, target] of plan.contentPages(takenTargets, new Set())) {
-    if (contentFetched >= MAX_CONTENT_PAGES) break
-
     const page = await readOrSkip(url)
     if (!page) continue
 
     fetched.add(url)
-    contentFetched += 1
     pages.push({ ...page, kind: 'services', target })
   }
 
@@ -333,7 +358,8 @@ async function suggestPages(homeUrl: URL, signal?: AbortSignal): Promise<string[
     const target = targetFor(url, '')
     if (target) takenTargets.add(target.key)
   }
-  const content = plan.contentPages(takenTargets, new Set(facts.map(([url]) => url)))
+  // Fewer policies here: each one is a page the practice has to save by hand.
+  const content = plan.contentPages(takenTargets, new Set(facts.map(([url]) => url)), 6)
 
   return [home, ...facts.map(([url]) => url), ...content.map(([url]) => url)]
 }

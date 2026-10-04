@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { Divider, Fieldset, SmallButton, TextInput } from './fields'
 import type { SiteConfig } from '@/lib/config/types'
-import { STATUTORY_WARNING } from '@/lib/import/content'
+import { mergePolicySection, STATUTORY_WARNING } from '@/lib/import/content'
+import { renderMarkdown } from '@/lib/markdown'
 import type { ConfigPatch, ExtractResult, Finding, PageFinding } from '@/lib/import/extract'
 import { SavedPagesImport, type SavedPage } from './SavedPagesImport'
 
@@ -66,6 +67,18 @@ function applyPatch(config: SiteConfig, patch: ConfigPatch): SiteConfig {
  * cannot overwrite each other's array.
  */
 function applyPage(config: SiteConfig, finding: PageFinding): SiteConfig {
+  // A policy is a section of the Practice policies page, not a page of its own.
+  if (finding.targetKind === 'policy') {
+    const index = config.pages.findIndex((page) => page.slug === 'policies')
+    if (index === -1) return config
+    const pages = [...config.pages]
+    pages[index] = {
+      ...pages[index],
+      body: mergePolicySection(pages[index].body, finding.targetLabel, finding.markdown),
+    }
+    return { ...config, pages }
+  }
+
   if (finding.targetKind === 'contentField') {
     return {
       ...config,
@@ -202,6 +215,9 @@ export function MigrationSection({
     ? result.findings.filter((f) => chosen[f.id]).length +
       result.pageFindings.filter((p) => chosenPages[p.id]).length
     : 0
+
+  const pageOffers = result ? result.pageFindings.filter((p) => p.targetKind !== 'policy') : []
+  const policyOffers = result ? result.pageFindings.filter((p) => p.targetKind === 'policy') : []
 
   const groups = result
     ? [...new Set(result.findings.map((f) => f.group))].map((group) => ({
@@ -359,7 +375,7 @@ export function MigrationSection({
               </div>
             ))}
 
-            {result.pageFindings.length > 0 && (
+            {pageOffers.length > 0 && (
               <div className="grid gap-3">
                 <h3 className="text-[0.8rem] font-semibold uppercase tracking-wide text-zinc-500">
                   Page wording
@@ -369,104 +385,36 @@ export function MigrationSection({
                   Ticking one <strong>replaces</strong> the wording we supply for that page.
                 </p>
 
-                {result.pageFindings.map((page) => {
-                  const ticked = Boolean(chosenPages[page.id])
+                {pageOffers.map((page) => (
+                  <PageOffer
+                    key={page.id}
+                    page={page}
+                    ticked={Boolean(chosenPages[page.id])}
+                    onTick={(ticked) => setChosenPages((c) => ({ ...c, [page.id]: ticked }))}
+                  />
+                ))}
+              </div>
+            )}
 
-                  return (
-                    <div
-                      key={page.id}
-                      className={`rounded-lg border ${
-                        ticked && (page.statutory || page.issues.length)
-                          ? 'border-amber-300 bg-amber-50/40'
-                          : 'border-zinc-200'
-                      }`}
-                    >
-                      <label className="flex cursor-pointer items-start gap-3 p-3 hover:bg-zinc-50">
-                        <input
-                          type="checkbox"
-                          className="mt-1 h-5 w-5 shrink-0 accent-zinc-900"
-                          checked={ticked}
-                          onChange={(e) =>
-                            setChosenPages((c) => ({ ...c, [page.id]: e.target.checked }))
-                          }
-                        />
-                        <span className="min-w-0 flex-1">
-                          <span className="flex flex-wrap items-center gap-2">
-                            <span className="font-semibold text-zinc-900">{page.targetLabel}</span>
-                            <span className="text-[0.75rem] text-zinc-500">
-                              {page.wordCount} words
-                            </span>
-                            {page.statutory && (
-                              <span className="rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[0.7rem] font-medium text-amber-900">
-                                We write this one for you
-                              </span>
-                            )}
-                            {page.issues.length > 0 && (
-                              <span className="rounded border border-red-200 bg-red-50 px-1.5 py-0.5 text-[0.7rem] font-medium text-red-800">
-                                {page.issues.length} wording{' '}
-                                {page.issues.length === 1 ? 'problem' : 'problems'}
-                              </span>
-                            )}
-                          </span>
-                          <span className="mt-1 block text-[0.85rem] leading-relaxed text-zinc-600">
-                            {page.excerpt}...
-                          </span>
-                          <span className="mt-1 block break-all text-[0.75rem] text-zinc-400">
-                            from {page.sourceUrl}
-                          </span>
-                        </span>
-                      </label>
+            {policyOffers.length > 0 && (
+              <div className="grid gap-3">
+                <h3 className="text-[0.8rem] font-semibold uppercase tracking-wide text-zinc-500">
+                  Practice policies
+                </h3>
+                <p className="text-[0.85rem] leading-relaxed text-zinc-600">
+                  Each policy you tick is added to your <strong>Practice policies</strong> page as
+                  its own section, under its own heading. Where it covers the same ground as one
+                  of ours, such as chaperones, it replaces ours rather than sitting beside it.
+                </p>
 
-                      {/* The argument for our own wording, made at the moment
-                          somebody chooses to replace it rather than buried in a
-                          notice they read before they had a decision to make. */}
-                      {ticked && page.statutory && (
-                        <div className="border-t border-amber-200 bg-amber-50 p-3 text-[0.85rem] leading-relaxed text-amber-900">
-                          <p className="font-semibold">
-                            You are about to replace a page we keep compliant for you.
-                          </p>
-                          <p className="mt-1.5">{page.caution}</p>
-                          <p className="mt-1.5">{STATUTORY_WARNING}</p>
-                          <p className="mt-1.5">
-                            If you take it anyway, read it line by line before you go live, and
-                            put a date in the diary to review it. It is your practice that is
-                            accountable for what this page says, not your old supplier and not
-                            us.
-                          </p>
-                        </div>
-                      )}
-
-                      {ticked && page.issues.length > 0 && (
-                        <div className="border-t border-red-200 bg-red-50 p-3 text-[0.85rem] leading-relaxed text-red-900">
-                          <p className="font-semibold">
-                            This wording does not follow NHS England&apos;s guidance:
-                          </p>
-                          <ul className="mt-1.5 grid gap-1.5 pl-5">
-                            {page.issues.map((issue) => (
-                              <li key={issue.found} className="list-disc">
-                                <strong>&ldquo;{issue.found}&rdquo;</strong> {issue.problem}
-                              </li>
-                            ))}
-                          </ul>
-                          <p className="mt-1.5">
-                            You can fix these in Page wording after importing. The guidance comes
-                            from user testing with over 160 patients, which is why the supplied
-                            wording avoids them.
-                          </p>
-                        </div>
-                      )}
-
-                      <details className="border-t border-zinc-200 p-3 text-[0.85rem]">
-                        <summary className="cursor-pointer font-medium text-zinc-700">
-                          Read what would be imported
-                        </summary>
-                        <pre className="mt-2 max-h-72 overflow-auto whitespace-pre-wrap rounded bg-zinc-50 p-3 font-sans text-[0.85rem] leading-relaxed text-zinc-700">
-                          {page.markdown}
-                        </pre>
-                      </details>
-                    </div>
-                  )
-                })}
+                {policyOffers.map((page) => (
+                  <PageOffer
+                    key={page.id}
+                    page={page}
+                    ticked={Boolean(chosenPages[page.id])}
+                    onTick={(ticked) => setChosenPages((c) => ({ ...c, [page.id]: ticked }))}
+                  />
+                ))}
               </div>
             )}
 
@@ -540,8 +488,9 @@ export function MigrationSection({
             whole estate rather than by your practice.
           </li>
           <li className="list-disc">
-            Staff names are a guess from the text of a page. Photographs and job titles are not
-            brought across.
+            Staff names and job titles are read from your team page where it lists them, with
+            the headings they sit under as groups. Photographs and biographies are not brought
+            across.
           </li>
           <li className="list-disc">
             You are responsible for what your website says, whether you typed it or imported
@@ -549,6 +498,109 @@ export function MigrationSection({
           </li>
         </ul>
       </Fieldset>
+    </div>
+  )
+}
+
+/** One page or policy offered for import, with its warnings and a preview. */
+function PageOffer({
+  page,
+  ticked,
+  onTick,
+}: {
+  page: PageFinding
+  ticked: boolean
+  onTick: (ticked: boolean) => void
+}) {
+  const policy = page.targetKind === 'policy'
+
+  return (
+    <div
+      className={`rounded-lg border ${
+        ticked && (page.statutory || page.issues.length)
+          ? 'border-amber-300 bg-amber-50/40'
+          : 'border-zinc-200'
+      }`}
+    >
+      <label className="flex cursor-pointer items-start gap-3 p-3 hover:bg-zinc-50">
+        <input
+          type="checkbox"
+          className="mt-1 h-5 w-5 shrink-0 accent-zinc-900"
+          checked={ticked}
+          onChange={(e) => onTick(e.target.checked)}
+        />
+        <span className="min-w-0 flex-1">
+          <span className="flex flex-wrap items-center gap-2">
+            <span className="font-semibold text-zinc-900">{page.targetLabel}</span>
+            <span className="text-[0.75rem] text-zinc-500">{page.wordCount} words</span>
+            {page.statutory && (
+              <span className="rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[0.7rem] font-medium text-amber-900">
+                {policy ? 'Replaces one of ours' : 'We write this one for you'}
+              </span>
+            )}
+            {page.issues.length > 0 && (
+              <span className="rounded border border-red-200 bg-red-50 px-1.5 py-0.5 text-[0.7rem] font-medium text-red-800">
+                {page.issues.length} wording {page.issues.length === 1 ? 'problem' : 'problems'}
+              </span>
+            )}
+          </span>
+          <span className="mt-1 block text-[0.85rem] leading-relaxed text-zinc-600">
+            {page.excerpt}...
+          </span>
+          <span className="mt-1 block break-all text-[0.75rem] text-zinc-400">
+            from {page.sourceUrl}
+          </span>
+        </span>
+      </label>
+
+      {/* The argument for our own wording, made at the moment somebody chooses
+          to replace it rather than buried in a notice they read before they
+          had a decision to make. */}
+      {ticked && page.statutory && (
+        <div className="border-t border-amber-200 bg-amber-50 p-3 text-[0.85rem] leading-relaxed text-amber-900">
+          <p className="font-semibold">
+            {policy
+              ? 'You are about to replace one of the policies we keep current for you.'
+              : 'You are about to replace a page we keep compliant for you.'}
+          </p>
+          <p className="mt-1.5">{page.caution}</p>
+          <p className="mt-1.5">{STATUTORY_WARNING}</p>
+          <p className="mt-1.5">
+            If you take it anyway, read it line by line before you go live, and put a date in
+            the diary to review it. It is your practice that is accountable for what this page
+            says, not your old supplier and not us.
+          </p>
+        </div>
+      )}
+
+      {ticked && page.issues.length > 0 && (
+        <div className="border-t border-red-200 bg-red-50 p-3 text-[0.85rem] leading-relaxed text-red-900">
+          <p className="font-semibold">This wording does not follow NHS England&apos;s guidance:</p>
+          <ul className="mt-1.5 grid gap-1.5 pl-5">
+            {page.issues.map((issue) => (
+              <li key={issue.found} className="list-disc">
+                <strong>&ldquo;{issue.found}&rdquo;</strong> {issue.problem}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-1.5">
+            You can fix these in Page wording after importing. The guidance comes from user
+            testing with over 160 patients, which is why the supplied wording avoids them.
+          </p>
+        </div>
+      )}
+
+      {/* Shown as it will look, not as Markdown, so the formatting can be
+          judged before it is taken. */}
+      <details className="border-t border-zinc-200 p-3 text-[0.85rem]">
+        <summary className="cursor-pointer font-medium text-zinc-700">
+          See how it will look
+        </summary>
+        <div className="ss-editor-preview mt-2 max-h-96 overflow-auto rounded bg-zinc-50 p-4">
+          {policy && <h2>{page.targetLabel}</h2>}
+          {renderMarkdown(page.markdown)}
+        </div>
+      </details>
     </div>
   )
 }

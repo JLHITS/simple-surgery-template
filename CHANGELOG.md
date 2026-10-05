@@ -8,6 +8,8 @@ Anything you have to do yourself is listed under **Action needed**.
 
 ## Unreleased
 
+## 1.5.0 - 2026-10-05
+
 - **New colour schemes.** Choose one in **Advanced settings**, where each is shown as a
   small preview. Only the colours change: your pages stay laid out exactly as they are.
   - **NHS with rainbow:** our usual look, with a thin rainbow in NHS colours across the top

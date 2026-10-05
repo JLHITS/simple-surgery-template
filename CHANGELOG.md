@@ -8,6 +8,8 @@ Anything you have to do yourself is listed under **Action needed**.
 
 ## Unreleased
 
+## 1.4.0 - 2026-10-05
+
 - **More than one surgery.** If you see patients at a branch surgery as well, add it in
   **Practice details**, under **Other sites**. Each site has its own address, and can have its
   own phone number, its own opening hours and a note for patients, such as where to park or

@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import type { SiteConfig } from '@/lib/config/types'
 import { formatDateShort } from '@/lib/hours'
-import { nhsProfileUrl } from '@/lib/practice'
+import { nhsProfileUrl, practiceSites } from '@/lib/practice'
 import { NhsLogo } from './NhsLogo'
 import { SimpleSurgeryMark } from './SimpleSurgeryMark'
 
@@ -20,13 +20,11 @@ export function Footer({ config, base }: { config: SiteConfig; base: string }) {
     .filter((p) => p.showInFooter)
     .sort((a, b) => a.order - b.order)
 
-  const address = [
-    practice.addressLine1,
-    practice.addressLine2,
-    practice.town,
-    practice.county,
-    practice.postcode,
-  ].filter(Boolean)
+  // Every surgery's address, each under its own name once there is more
+  // than one. A patient checking the footer for "which one is mine" should
+  // not have to go to the contact page to find out.
+  const sites = practiceSites(practice).filter((site) => site.addressLines.length > 0)
+  const several = sites.length > 1
 
   return (
     <footer className="mt-16 border-t-4 border-[color:var(--accent)] bg-nhs-grey-5">
@@ -34,14 +32,30 @@ export function Footer({ config, base }: { config: SiteConfig; base: string }) {
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <h2 className="text-base font-bold">{practice.name}</h2>
-            <address className="mt-3 break-words text-[0.95rem] not-italic leading-relaxed text-nhs-grey-1">
-              {address.map((line) => (
-                <span key={line} className="block">
-                  {line}
-                </span>
-              ))}
-            </address>
-            {practice.phone && (
+            {sites.map((site) => (
+              <address
+                key={site.id}
+                className="mt-3 break-words text-[0.95rem] not-italic leading-relaxed text-nhs-grey-1"
+              >
+                {several && <span className="block font-semibold text-nhs-black">{site.label}</span>}
+                {site.addressLines.map((line) => (
+                  <span key={line} className="block">
+                    {line}
+                  </span>
+                ))}
+                {/* With several sites each number sits with its own address,
+                    so the main number is not read as the last branch's. */}
+                {several && (site.main ? practice.phone : site.phone) && (
+                  <a
+                    href={`tel:${(site.main ? practice.phone : site.phone).replace(/\s+/g, '')}`}
+                    className="ss-link block"
+                  >
+                    {site.main ? practice.phone : site.phone}
+                  </a>
+                )}
+              </address>
+            ))}
+            {(!several || !sites.some((site) => site.main)) && practice.phone && (
               <p className="mt-3 text-[0.95rem]">
                 <a href={`tel:${practice.phone.replace(/\s+/g, '')}`} className="ss-link">
                   {practice.phone}
@@ -49,7 +63,7 @@ export function Footer({ config, base }: { config: SiteConfig; base: string }) {
               </p>
             )}
             {practice.email && (
-              <p className="text-[0.95rem]">
+              <p className={`text-[0.95rem] ${several ? 'mt-3' : ''}`}>
                 <a href={`mailto:${practice.email}`} className="ss-link break-all">
                   {practice.email}
                 </a>

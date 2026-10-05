@@ -8,6 +8,20 @@ Anything you have to do yourself is listed under **Action needed**.
 
 ## Unreleased
 
+- **More than one surgery.** If you see patients at a branch surgery as well, add it in
+  **Practice details**, under **Other sites**. Each site has its own address, and can have its
+  own phone number, its own opening hours and a note for patients, such as where to park or
+  that it has a dispensary. Your Contact page then shows every surgery with directions to each,
+  and the opening hours of any branch that keeps different hours. Your footer lists every
+  address, and the top of your home page says where your surgeries are.
+- **Name your main surgery.** Once you have more than one site, give your main surgery a name
+  in **Practice details**, such as the village it is in, so patients can tell your sites apart.
+- **Migration brings your branches across.** Reading a Practice365 website now finds each of
+  your surgeries from the contact cards on your old site, with their phone numbers and opening
+  hours, and offers them as your other sites.
+
+Nothing changes for a practice with one surgery, and nothing needs doing.
+
 ## 1.3.0 - 2026-10-04
 
 - **Formatting buttons in the text editor.** Every page's wording now opens with buttons for

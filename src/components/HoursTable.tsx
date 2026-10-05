@@ -125,7 +125,7 @@ function WeekTimeline({
 }
 
 /** Grouped, plain text hours. This is the accessible source of truth. */
-function HoursList({ days }: { days: OpeningDay[] }) {
+export function HoursList({ days }: { days: OpeningDay[] }) {
   return (
     <dl className="divide-y divide-nhs-grey-4 border-y border-nhs-grey-4">
       {summariseHours(days).map((row) => (

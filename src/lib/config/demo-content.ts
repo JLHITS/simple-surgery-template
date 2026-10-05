@@ -52,6 +52,33 @@ export const demoOverlay = {
     boundaryDescription:
       'We can register you if you live inside our practice area. It covers Frogmorton, Bywater and the villages along the East Road as far as Whitfurrows.',
     boundaryPostcodes: 'SH1, SH2, SH3 4, SH3 5',
+    // A branch, to show how a practice with more than one surgery looks:
+    // shorter hours than the main site, its own number and its own parking.
+    mainSiteName: 'Frogmorton',
+    sites: [
+      {
+        id: 'site-bywater',
+        name: 'Bywater',
+        addressLine1: 'The Old Mill',
+        addressLine2: 'Mill Lane',
+        town: 'Bywater',
+        county: 'Eastfarthing',
+        postcode: 'SH2 7GD',
+        phone: '01632 960 120',
+        sameHours: false,
+        days: [
+          { day: 'monday', closed: false, open: '08:30', close: '12:30' },
+          { day: 'tuesday', closed: true, open: '08:30', close: '12:30' },
+          { day: 'wednesday', closed: false, open: '08:30', close: '12:30' },
+          { day: 'thursday', closed: true, open: '08:30', close: '12:30' },
+          { day: 'friday', closed: false, open: '08:30', close: '12:30' },
+          { day: 'saturday', closed: true, open: '08:30', close: '12:30' },
+          { day: 'sunday', closed: true, open: '08:30', close: '12:30' },
+        ],
+        notes:
+          'Free parking in the village hall car park opposite. Step free access through the side door.',
+      },
+    ],
   },
 
   hours: {

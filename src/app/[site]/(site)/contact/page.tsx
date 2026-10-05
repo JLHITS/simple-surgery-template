@@ -1,10 +1,11 @@
 import type { Metadata } from 'next'
 import { Callout, PageHeader } from '@/components/ui'
 import { AccessModes } from '@/components/AccessModes'
-import { HoursTable } from '@/components/HoursTable'
+import { HoursList, HoursTable } from '@/components/HoursTable'
 import { Icon } from '@/components/Icon'
 import { OpenNow } from '@/components/OpenNow'
 import { getSiteConfig } from '@/lib/config'
+import { practiceSites } from '@/lib/practice'
 import { siteBase } from '@/lib/routing'
 
 export const metadata: Metadata = {
@@ -34,17 +35,15 @@ export default async function ContactPage({ params }: Props) {
   const config = await getSiteConfig(site)
   const { practice, hours, content } = config
 
-  const addressLines = [
-    practice.addressLine1,
-    practice.addressLine2,
-    practice.town,
-    practice.county,
-    practice.postcode,
-  ].filter(Boolean)
-
-  const mapsQuery = encodeURIComponent(
-    `${practice.name}, ${addressLines.join(', ')}`,
-  )
+  // The main surgery first, then any branches. With one site this is just
+  // the practice's address, printed the way it always was.
+  const allSites = practiceSites(practice)
+  const main = allSites[0]
+  const branches = allSites.slice(1)
+  const sites = allSites.filter((site) => !site.main || site.addressLines.length > 0)
+  const ownHours = branches.filter((site) => site.days)
+  const sameHours = branches.filter((site) => !site.days)
+  const mainName = practice.mainSiteName.trim() || 'the main surgery'
 
   return (
     <>
@@ -133,39 +132,58 @@ export default async function ContactPage({ params }: Props) {
                 under it, above a "Get directions" link that searches a map for
                 an empty string, is worse than leaving the block out until the
                 practice has filled their address in.
+
+                With branches, each site gets its own block, so a patient can
+                see at a glance which building is theirs, its phone number if
+                it has its own, and the way there.
               */}
-              {addressLines.length > 0 && (
-                <div className="flex gap-4">
+              {sites.map((site) => (
+                <div key={site.id} className="flex gap-4">
                   <span className="accent-text mt-0.5 shrink-0" aria-hidden="true">
                     <Icon name="pin" size={22} />
                   </span>
                   <div>
-                    <dt className="font-bold">Address</dt>
-                    <dd className="mt-0.5">
-                      <address className="break-words not-italic leading-relaxed">
-                        {addressLines.map((line) => (
-                          <span key={line} className="block">
-                            {line}
-                          </span>
-                        ))}
-                      </address>
-                    </dd>
-                    <dd className="mt-2">
-                      <a
-                        href={`https://www.google.com/maps/search/?api=1&query=${mapsQuery}`}
-                        className="ss-link text-[0.95rem]"
-                      >
-                        Get directions
-                      </a>
-                    </dd>
+                    <dt className="font-bold">{branches.length ? site.label : 'Address'}</dt>
+                    {site.addressLines.length > 0 && (
+                      <dd className="mt-0.5">
+                        <address className="break-words not-italic leading-relaxed">
+                          {site.addressLines.map((line) => (
+                            <span key={line} className="block">
+                              {line}
+                            </span>
+                          ))}
+                        </address>
+                      </dd>
+                    )}
+                    {site.phone && (
+                      <dd className="mt-1 text-[0.95rem]">
+                        Phone:{' '}
+                        <a href={`tel:${site.phone.replace(/\s+/g, '')}`} className="ss-link">
+                          {site.phone}
+                        </a>
+                      </dd>
+                    )}
+                    {site.notes && (
+                      <dd className="mt-1 text-[0.95rem] leading-relaxed text-nhs-grey-1">{site.notes}</dd>
+                    )}
+                    {site.addressLines.length > 0 && (
+                      <dd className="mt-2">
+                        <a href={site.directionsUrl} className="ss-link text-[0.95rem]">
+                          Get directions
+                          {branches.length > 0 && <span className="sr-only"> to {site.label}</span>}
+                        </a>
+                      </dd>
+                    )}
                   </div>
                 </div>
-              )}
+              ))}
             </dl>
 
             {(practice.parkingInfo || practice.accessInfo || practice.publicTransportInfo) && (
               <div className="mt-10">
-                <h2>Getting here</h2>
+                {/* Parking and access are the main surgery's. Each branch
+                    carries its own in the note under its address. */}
+                <h2>{branches.length ? `Getting to ${practice.mainSiteName.trim() || 'the main surgery'}` : 'Getting here'}</h2>
                 <div className="mt-4 grid gap-4">
                   {practice.publicTransportInfo && (
                     <div>
@@ -203,7 +221,14 @@ export default async function ContactPage({ params }: Props) {
               <OpenNow days={hours.days} closures={hours.closures} />
             </div>
 
-            <div className="mt-5">
+            {/*
+              Branches often keep shorter hours than the main surgery. When
+              any does, the main surgery's table says whose it is and each
+              branch with its own hours follows with its own list. Bank
+              holidays and other closures apply to every site.
+            */}
+            {ownHours.length > 0 && <h3 className="mt-5 text-lg">{main.label}</h3>}
+            <div className={ownHours.length > 0 ? 'mt-3' : 'mt-5'}>
               <HoursTable
                 days={hours.days}
                 closures={hours.closures}
@@ -212,6 +237,25 @@ export default async function ContactPage({ params }: Props) {
                 showTimeline={config.advanced.showHoursTimeline}
               />
             </div>
+
+            {ownHours.map((site) => (
+              <div key={site.id} className="mt-8">
+                <h3 className="text-lg">{site.label}</h3>
+                <div className="mt-3">
+                  <HoursList days={site.days!} />
+                </div>
+              </div>
+            ))}
+
+            {sameHours.length > 0 && (
+              <p className="mt-4 text-[0.95rem] text-nhs-grey-1">
+                {ownHours.length === 0
+                  ? 'These hours are the same at all our surgeries.'
+                  : `${sameHours.map((site) => site.label).join(' and ')} ${
+                      sameHours.length === 1 ? 'keeps' : 'keep'
+                    } the same hours as ${mainName}.`}
+              </p>
+            )}
 
             {hours.receptionNote && (
               <p className="mt-4 text-[0.95rem] text-nhs-grey-1">{hours.receptionNote}</p>

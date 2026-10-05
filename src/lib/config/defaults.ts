@@ -52,6 +52,9 @@ export const defaultConfig: SiteConfig = {
     boundaryDescription: '',
     boundaryPostcodes: '',
     boundaryMapUrl: '',
+    // One site until the practice adds another.
+    mainSiteName: '',
+    sites: [],
   },
 
   hours: {

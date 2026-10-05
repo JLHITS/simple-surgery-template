@@ -1,4 +1,4 @@
-import type { OpeningDay, SiteConfig, TeamMember, Weekday } from '@/lib/config/types'
+import type { OpeningDay, PracticeSite, SiteConfig, TeamMember, Weekday } from '@/lib/config/types'
 import {
   CORE_POLICY_CAUTION,
   importPage,
@@ -357,35 +357,154 @@ function linesOf(el: ElementNode): string[] {
     .filter(Boolean)
 }
 
+/** One of Practice365's contact cards: a surgery, its address, number and hours. */
+interface ContactCard {
+  name: string
+  address: Address
+  phone: string
+  days: OpeningDay[] | null
+  /** Other cards at the same address, such as the site's dispensary. */
+  alsoHere: string[]
+}
+
+const hasClass = (name: string) => (el: ElementNode) =>
+  new RegExp(`(^|\\s)${name}(\\s|$)`).test(classOf(el))
+
 /**
- * The first of Practice365's contact cards, from the Business Profile plugin.
+ * Practice365's contact cards, from the Business Profile plugin, main surgery
+ * first.
  *
- * Practices with a branch surgery have one card per site and list the main
- * surgery first. The card's address lines are separated by line breaks, which
- * the prose reader below cannot see, so it read the card's heading as the
- * street and lost the street altogether.
+ * Practices with a branch have one card per site, and list the main surgery
+ * first. The card's address lines are separated by line breaks, which the
+ * prose reader below cannot see, so it read the card's heading as the street
+ * and lost the street altogether. A second card at the same address, like
+ * "Dispensary (Gotham)", is part of that site rather than another one.
  */
-function fromContactCard(pages: CrawledPage[]): Address | null {
+function contactCards(pages: CrawledPage[]): ContactCard[] {
   for (const page of [...pages].sort((a, b) => rank(a.kind) - rank(b.kind))) {
     if (!/bp-contact-card/.test(page.html)) continue
-    const card = findFirst(parseHtml(page.html), (el) => /(^|\s)bp-contact-card(\s|$)/.test(classOf(el)))
-    const address = card && findFirst(card, (el) => /(^|\s)bp-address(\s|$)/.test(classOf(el)))
-    if (!address) continue
 
-    const lines = linesOf(address)
-    const at = lines.findIndex((line) => POSTCODE.test(line))
-    if (at < 1) continue
+    const cards: ContactCard[] = []
+    for (const card of findAll(parseHtml(page.html), hasClass('bp-contact-card'), { nested: false })) {
+      const address = findFirst(card, hasClass('bp-address'))
+      if (!address) continue
 
-    const parts = lines.slice(0, at)
-    return {
-      line1: parts[0],
-      line2: parts.length > 2 ? parts.slice(1, -1).join(', ') : '',
-      town: parts.length > 1 ? parts[parts.length - 1] : '',
-      county: '',
-      postcode: formatPostcode(lines[at]),
+      const lines = linesOf(address)
+      const at = lines.findIndex((line) => POSTCODE.test(line))
+      if (at < 1) continue
+
+      const parts = lines.slice(0, at)
+      const label = findFirst(card, hasClass('bp-name'))
+      const phoneLink = findFirst(card, (el) => el.tag === 'a' && /^tel:/i.test(attr(el.attrs, 'href')))
+      const hours = findFirst(card, hasClass('bp-opening-hours'))
+
+      const found: ContactCard = {
+        name: label ? plainText(label) : '',
+        address: {
+          line1: parts[0],
+          line2: parts.length > 2 ? parts.slice(1, -1).join(', ') : '',
+          town: parts.length > 1 ? parts[parts.length - 1] : '',
+          county: '',
+          postcode: formatPostcode(lines[at]),
+        },
+        phone: phoneLink ? cleanPhone(attr(phoneLink.attrs, 'href').replace(/^tel:/i, '')) : '',
+        days: hours ? weekFromBusinessProfile(hours) : null,
+        alsoHere: [],
+      }
+
+      const same = cards.find(
+        (c) =>
+          c.address.postcode === found.address.postcode &&
+          c.address.line1.toLowerCase() === found.address.line1.toLowerCase(),
+      )
+      if (same) {
+        // The same surgery again: contact pages repeat a card in several
+        // layouts, only some of which show the hours. Fill in what the first
+        // copy lacked. A different name at the same address is part of the
+        // site, like its dispensary, whose own hours are not the surgery's.
+        if (!found.name || found.name === same.name) {
+          same.days ??= found.days
+          same.phone ||= found.phone
+        } else if (!same.alsoHere.includes(found.name)) {
+          same.alsoHere.push(found.name)
+        }
+        continue
+      }
+      cards.push(found)
     }
+
+    if (cards.length) return cards
   }
-  return null
+  return []
+}
+
+function fromContactCard(pages: CrawledPage[]): Address | null {
+  return contactCards(pages)[0]?.address ?? null
+}
+
+/**
+ * What a card calls its site, without the practice's own name around it:
+ * "Orchard Surgery (Gotham)" is "Gotham".
+ */
+function siteName(cardName: string, practice: string): string {
+  const name = tidy(cardName)
+  const inBrackets = /\(([^)]+)\)\s*$/.exec(name)
+  if (inBrackets && (!practice || name.toLowerCase().startsWith(practice.toLowerCase()))) {
+    return inBrackets[1].trim()
+  }
+  if (practice && name.toLowerCase().startsWith(practice.toLowerCase())) {
+    return name.slice(practice.length).replace(/^[\s,:–—-]+/, '').trim() || name
+  }
+  return name
+}
+
+function sameWeek(a: OpeningDay[], b: OpeningDay[]): boolean {
+  return ORDER.every((day) => {
+    const x = a.find((d) => d.day === day)
+    const y = b.find((d) => d.day === day)
+    if (!x || !y) return false
+    if (x.closed || y.closed) return x.closed === y.closed
+    return x.open === y.open && x.close === y.close
+  })
+}
+
+/**
+ * The practice's other sites, from every contact card after the first.
+ *
+ * Each keeps its own phone number only if it differs from the main one, and
+ * its own hours only if they differ from the main surgery's. A dispensary at
+ * the same address becomes a note on that site rather than a site of its own.
+ */
+function findSites(
+  pages: CrawledPage[],
+  practice: string,
+  mainPhone: string,
+): { mainSiteName: string; sites: PracticeSite[] } | null {
+  const cards = contactCards(pages)
+  if (cards.length < 2) return null
+
+  const [main, ...branches] = cards
+  const mainDays = main.days ?? blankWeek()
+
+  const sites = branches.map((card, i): PracticeSite => {
+    const own = card.days && !sameWeek(card.days, mainDays)
+    const dispensary = card.alsoHere.some((name) => /dispens/i.test(name))
+    return {
+      id: `site-${i + 1}`,
+      name: siteName(card.name, practice) || card.address.town,
+      addressLine1: card.address.line1,
+      addressLine2: card.address.line2 || '',
+      town: card.address.town,
+      county: card.address.county,
+      postcode: card.address.postcode,
+      phone: card.phone && card.phone !== mainPhone ? card.phone : '',
+      sameHours: !own,
+      days: own ? (card.days as OpeningDay[]) : mainDays.map((d) => ({ ...d })),
+      notes: dispensary ? 'This site has a dispensary.' : '',
+    }
+  })
+
+  return { mainSiteName: siteName(main.name, practice), sites }
 }
 
 function findAddress(pages: CrawledPage[]): Address | null {
@@ -573,13 +692,16 @@ const TIME_RANGE =
  * The Business Profile plugin's opening hours, as Practice365 sites use it.
  *
  * Each day is a row with the day's name and one time span per session, or
- * "Closed". Only the first card on a page is read: the rest are branches.
+ * "Closed". Only the first card on a page is read here, because the rest are
+ * branches: see contactCards for those.
  */
 function fromBusinessProfile(html: string): OpeningDay[] | null {
   if (!/bp-opening-hours/.test(html)) return null
   const block = findFirst(parseHtml(html), (el) => /(^|\s)bp-opening-hours(\s|$)/.test(classOf(el)))
-  if (!block) return null
+  return block ? weekFromBusinessProfile(block) : null
+}
 
+function weekFromBusinessProfile(block: ElementNode): OpeningDay[] | null {
   const week = blankWeek()
   const touched = new Set<Weekday>()
 
@@ -1258,7 +1380,11 @@ export function extract(pages: CrawledPage[]): ExtractResult {
     missing.push('phone number')
   }
 
-  if (phones[1]) {
+  // The other sites, which also tell us whose the second number is.
+  const branches = findSites(pages, name, phones[0] || '')
+  const branchPhones = new Set(branches?.sites.map((s) => s.phone).filter(Boolean))
+
+  if (phones[1] && !branchPhones.has(phones[1])) {
     push(
       'practice.phoneSecondary',
       'Practice details',
@@ -1288,6 +1414,29 @@ export function extract(pages: CrawledPage[]): ExtractResult {
     })
   } else {
     missing.push('email address')
+  }
+
+  if (branches) {
+    const describe = (site: PracticeSite) =>
+      [
+        [site.addressLine1, site.addressLine2, site.town, site.postcode].filter(Boolean).join(', '),
+        site.phone,
+        site.sameHours ? '' : 'its own opening hours',
+        site.notes ? 'a dispensary' : '',
+      ]
+        .filter(Boolean)
+        .join(', ')
+    push(
+      'practice.sites',
+      'Practice details',
+      branches.sites.length === 1 ? 'Another site' : `${branches.sites.length} other sites`,
+      `${branches.mainSiteName ? `Main surgery: ${branches.mainSiteName}. ` : ''}${branches.sites
+        .map((site) => `${site.name}: ${describe(site)}`)
+        .join('. ')}`,
+      'medium',
+      home.url,
+      { practice: { mainSiteName: branches.mainSiteName, sites: branches.sites } },
+    )
   }
 
   const address = findAddress(pages)

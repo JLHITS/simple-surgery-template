@@ -4,6 +4,7 @@ import type {
   NoticeLevel,
   OpeningDay,
   PracticeNewsItem,
+  PracticeSite,
   PublicationSchemeRow,
   QuickLink,
   ServiceItem,
@@ -218,6 +219,36 @@ function sanitiseClosures(value: unknown): Closure[] {
     .sort((a, b) => a.date.localeCompare(b.date))
 }
 
+/** No practice has more branches than this, and a list that long is a mistake. */
+const MAX_SITES = 10
+
+/**
+ * Branch surgeries. A site with no name and no address says nothing a
+ * patient could use, so it is dropped rather than shown as an empty card.
+ */
+function sanitiseSites(value: unknown, mainDays: OpeningDay[]): PracticeSite[] {
+  return arr(value)
+    .map((item, i): PracticeSite | null => {
+      const source = obj(item)
+      const site: PracticeSite = {
+        id: id(source.id, 'site', i),
+        name: str(source.name),
+        addressLine1: str(source.addressLine1),
+        addressLine2: str(source.addressLine2),
+        town: str(source.town),
+        county: str(source.county),
+        postcode: str(source.postcode, '', 12).toUpperCase(),
+        phone: str(source.phone, '', 32),
+        sameHours: bool(source.sameHours, true),
+        days: sanitiseDays(source.days, mainDays),
+        notes: str(source.notes, '', LIMITS.medium),
+      }
+      return site.name || site.addressLine1 || site.postcode ? site : null
+    })
+    .filter((s): s is PracticeSite => s !== null)
+    .slice(0, MAX_SITES)
+}
+
 function sanitiseTeam(value: unknown): TeamMember[] {
   return arr(value)
     .map((item, i): TeamMember | null => {
@@ -421,6 +452,8 @@ export function sanitiseConfig(input: unknown, fallback: SiteConfig): SiteConfig
       boundaryDescription: str(practice.boundaryDescription, '', LIMITS.medium),
       boundaryPostcodes: str(practice.boundaryPostcodes, '', LIMITS.medium),
       boundaryMapUrl: url(practice.boundaryMapUrl),
+      mainSiteName: str(practice.mainSiteName),
+      sites: sanitiseSites(practice.sites, sanitiseDays(hours.days, fallback.hours.days)),
     },
 
     hours: {

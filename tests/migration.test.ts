@@ -278,3 +278,58 @@ test('the editor converts its own HTML back exactly, guessing at nothing', () =>
     '## Heading\n\nSome **bold** and a [link](https://www.nhs.uk).\n\n**A bold line**\n\n- One\n- Two\n\n> Call 999.\n\nA new line in Chrome',
   )
 })
+
+test('every contact card after the first is another site, with its own hours, number and dispensary', () => {
+  const card = (name: string, address: string, phone: string, hours?: [string, string, string]) =>
+    `<address class="bp-contact-card"><div class="bp-name">${name}</div><div class="bp-address">${address}</div>` +
+    `<div class="bp-phone"><a href="tel:${phone}">${phone}</a></div>` +
+    (hours
+      ? `<div class="bp-opening-hours">${['monday', 'tuesday', 'wednesday', 'thursday', 'friday']
+          .map(
+            (d) =>
+              `<div class="bp-weekday"><span class="bp-weekday-name">${d}</span><span class="bp-time">${d === 'wednesday' ? hours[2] : hours[0]}&thinsp;to&thinsp;${hours[1]}</span></div>`,
+          )
+          .join('')}<div class="bp-weekday"><span class="bp-weekday-name">Saturday</span><span class="bp-time">Closed</span></div><div class="bp-weekday"><span class="bp-weekday-name">Sunday</span><span class="bp-time">Closed</span></div></div>`
+      : '') +
+    '</address>'
+
+  const kegworth = 'Dragwell,<br />Kegworth,<br />DE74 2EL'
+  const gotham = 'Nottingham Road,<br />Gotham,<br />NG11 0HE'
+  // As Orchard's contact page has it: each surgery several times, only some
+  // copies with their hours, and the dispensary as a card of its own.
+  const contact = page(
+    '/contact/',
+    card('Orchard Surgery (Kegworth)', kegworth, '01509 672419') +
+      card('Orchard Surgery (Gotham)', gotham, '0115 983 0011') +
+      card('Orchard Surgery (Kegworth)', kegworth, '01509 672419', ['8:00 am', '6:30 pm', '8:00 am']) +
+      card('Orchard Surgery (Gotham)', gotham, '0115 983 0011', ['8:30 am', '6:00 pm', '8:30 am']) +
+      card('Dispensary (Gotham)', gotham, '0115 983 0011', ['9:00 am', '5:00 pm', '9:00 am']),
+    'Contact',
+  )
+
+  const result = extract([
+    { url: `${site}/`, html: page('/', '<p>Welcome to Orchard Surgery.</p>', 'Orchard Surgery'), kind: 'home' },
+    { url: `${site}/contact/`, html: contact, kind: 'contact' },
+  ])
+
+  const found = result.findings.find((f) => f.id === 'practice.sites')
+  assert.ok(found, 'expected the other sites to be offered')
+  assert.equal(found.patch.practice?.mainSiteName, 'Kegworth')
+
+  const [gothamSite, ...rest] = found.patch.practice?.sites ?? []
+  assert.equal(rest.length, 0, 'the dispensary is part of the Gotham site, not another one')
+  assert.equal(gothamSite.name, 'Gotham')
+  assert.equal(gothamSite.addressLine1, 'Nottingham Road')
+  assert.equal(gothamSite.postcode, 'NG11 0HE')
+  assert.equal(gothamSite.phone, '0115 983 0011')
+  assert.equal(gothamSite.sameHours, false)
+  // The surgery's hours, not the dispensary's.
+  assert.equal(gothamSite.days[0].open, '08:30')
+  assert.equal(gothamSite.days[0].close, '18:00')
+  assert.equal(gothamSite.notes, 'This site has a dispensary.')
+
+  // The branch's number belongs to the branch, so it is not offered as a
+  // mystery second line for the main surgery.
+  assert.ok(!result.findings.some((f) => f.id === 'practice.phoneSecondary'))
+  assert.equal(result.findings.find((f) => f.id === 'practice.address')?.display, 'Dragwell, Kegworth, DE74 2EL')
+})

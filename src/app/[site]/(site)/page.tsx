@@ -7,7 +7,7 @@ import { NoticeBanner } from '@/components/NoticeBanner'
 import { OpenNow } from '@/components/OpenNow'
 import { UrgentHelp } from '@/components/UrgentHelp'
 import { getSiteConfig } from '@/lib/config'
-import { practiceName, practiceStrapline } from '@/lib/practice'
+import { addressSummary, practiceName, practiceStrapline } from '@/lib/practice'
 import { siteBase } from '@/lib/routing'
 import { getNationalNews } from '@/lib/news'
 
@@ -59,10 +59,12 @@ export default async function HomePage({ params }: Props) {
               {practice.phone}
             </a>
           )}
-          <Link href={`${base}/contact`} className="inline-flex items-center gap-2 text-sm ss-link">
-            <Icon name="pin" size={18} />
-            {practice.addressLine1}, {practice.postcode}
-          </Link>
+          {addressSummary(practice) && (
+            <Link href={`${base}/contact`} className="inline-flex items-center gap-2 text-sm ss-link">
+              <Icon name="pin" size={18} />
+              {addressSummary(practice)}
+            </Link>
+          )}
         </div>
       </div>
 

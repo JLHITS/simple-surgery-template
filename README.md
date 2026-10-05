@@ -197,6 +197,7 @@ What it can usually find:
 | Phone numbers | `tel:` links, then numbers in the text |
 | Email address | `mailto:` links, preferring nhs.net |
 | Address and postcode | Structured data, the first contact card, then the text around a postcode |
+| Other sites | Every contact card after the first, with its own phone number and hours |
 | ODS code | Your online consultation or SystmOnline link, which usually contains it |
 | Opening hours | Structured data, the first contact card, then tables, then lines of text |
 | Online service links | Recognised by supplier: Accurx, eConsult, PATCHS, Klinik, SystmOnline, Patient Access, the NHS App |

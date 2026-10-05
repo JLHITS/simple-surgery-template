@@ -44,6 +44,13 @@ export function buildSearchIndex(config: SiteConfig): SearchDoc[] {
         config.practice.addressLine1,
         config.practice.town,
         config.practice.postcode,
+        ...(config.practice.sites ?? []).flatMap((site) => [
+          site.name,
+          site.addressLine1,
+          site.town,
+          site.postcode,
+          site.notes,
+        ]),
         config.practice.parkingInfo,
         config.practice.accessInfo,
         config.practice.publicTransportInfo,

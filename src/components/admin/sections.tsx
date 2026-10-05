@@ -1,6 +1,6 @@
 'use client'
 
-import type { Closure, SiteConfig } from '@/lib/config/types'
+import type { Closure, OpeningDay, PracticeSite, SiteConfig } from '@/lib/config/types'
 import { ICON_NAMES } from '@/components/Icon'
 import { WEEKDAY_LABELS, WEEKDAYS } from '@/lib/hours'
 import {
@@ -101,6 +101,98 @@ export function PracticeSection({ site, config, update }: SectionProps) {
           value={practice.postcode}
           onChange={(postcode) => set({ postcode })}
         />
+        <TextInput
+          label="What you call this site"
+          hint='Only needed if you have more than one surgery, for example "Kegworth". Shown beside this address so patients can tell your sites apart.'
+          value={practice.mainSiteName}
+          onChange={(mainSiteName) => set({ mainSiteName })}
+        />
+      </Fieldset>
+
+      <Divider />
+
+      <Fieldset
+        legend="Other sites"
+        description="Branch surgeries patients can visit. Each one is shown on your Contact page and in the footer with its own address, and its own phone number and opening hours if they are different from your main surgery's."
+      >
+        <ListEditor<PracticeSite>
+          items={practice.sites}
+          onChange={(sites) => set({ sites })}
+          addLabel="Add a site"
+          emptyText="Just the one surgery. Add a site if you also see patients somewhere else."
+          createItem={() => ({
+            id: newId('site'),
+            name: '',
+            addressLine1: '',
+            addressLine2: '',
+            town: '',
+            county: '',
+            postcode: '',
+            phone: '',
+            sameHours: true,
+            days: config.hours.days.map((d) => ({ ...d })),
+            notes: '',
+          })}
+          renderSummary={(site) => (
+            <>
+              {site.name || site.town || 'New site'}
+              {site.postcode && <span className="ml-2 font-normal text-zinc-500">{site.postcode}</span>}
+            </>
+          )}
+          renderFields={(site, patch) => (
+            <>
+              <TextInput
+                label="Name"
+                hint='What patients call it, for example "Gotham" or "Gotham branch surgery".'
+                value={site.name}
+                onChange={(name) => patch({ name })}
+              />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <TextInput
+                  label="Address line 1"
+                  value={site.addressLine1}
+                  onChange={(addressLine1) => patch({ addressLine1 })}
+                />
+                <TextInput
+                  label="Address line 2"
+                  value={site.addressLine2}
+                  onChange={(addressLine2) => patch({ addressLine2 })}
+                />
+                <TextInput label="Town" value={site.town} onChange={(town) => patch({ town })} />
+                <TextInput label="County" value={site.county} onChange={(county) => patch({ county })} />
+                <TextInput
+                  label="Postcode"
+                  value={site.postcode}
+                  onChange={(postcode) => patch({ postcode })}
+                />
+              </div>
+              <TextInput
+                label="Phone number"
+                type="tel"
+                hint="Leave blank if patients use your main number."
+                value={site.phone}
+                onChange={(phone) => patch({ phone })}
+              />
+              <Toggle
+                label="Open the same hours as the main surgery"
+                hint="Untick to set this site's own hours. Bank holidays and other closures apply to every site."
+                checked={site.sameHours}
+                onChange={(sameHours) => patch({ sameHours })}
+              />
+              {!site.sameHours &&
+                dayRows(site.days, (day, change) =>
+                  patch({ days: site.days.map((d) => (d.day === day ? { ...d, ...change } : d)) }),
+                )}
+              <TextArea
+                label="Anything else about this site"
+                hint="Parking, step free access, whether it has a dispensary. Shown with its address."
+                value={site.notes}
+                onChange={(notes) => patch({ notes })}
+                rows={2}
+              />
+            </>
+          )}
+        />
       </Fieldset>
 
       <Divider />
@@ -195,6 +287,68 @@ export function PracticeSection({ site, config, update }: SectionProps) {
 
 /* ------------------------------------------------------------------ hours */
 
+/**
+ * The seven-row time editor, used for the main surgery, extended access and
+ * each branch surgery with its own hours.
+ */
+const dayRows = (
+  source: OpeningDay[],
+  onChange: (day: string, patch: Record<string, unknown>) => void,
+  openLabel = 'Open',
+) => (
+  <div className="grid gap-2">
+    {WEEKDAYS.map((weekday) => {
+      const day = source.find((d) => d.day === weekday)
+      if (!day) return null
+
+      return (
+        <div
+          key={weekday}
+          className="flex flex-wrap items-center gap-3 rounded-lg border border-zinc-200 px-3 py-2.5"
+        >
+          <span className="w-24 shrink-0 text-sm font-semibold">
+            {WEEKDAY_LABELS[weekday]}
+          </span>
+
+          <label className="flex items-center gap-2 text-[0.85rem]">
+            <input
+              type="checkbox"
+              checked={!day.closed}
+              onChange={(e) => onChange(weekday, { closed: !e.target.checked })}
+              className="h-4 w-4 accent-zinc-900"
+            />
+            {openLabel}
+          </label>
+
+          {!day.closed && (
+            <>
+              <label className="flex items-center gap-1.5 text-[0.85rem]">
+                <span className="text-zinc-500">from</span>
+                <input
+                  type="time"
+                  value={day.open}
+                  onChange={(e) => onChange(weekday, { open: e.target.value })}
+                  className="min-h-10 rounded-lg border border-zinc-300 px-2 py-1 text-[0.85rem]"
+                />
+              </label>
+              <label className="flex items-center gap-1.5 text-[0.85rem]">
+                <span className="text-zinc-500">to</span>
+                <input
+                  type="time"
+                  value={day.close}
+                  onChange={(e) => onChange(weekday, { close: e.target.value })}
+                  className="min-h-10 rounded-lg border border-zinc-300 px-2 py-1 text-[0.85rem]"
+                />
+              </label>
+            </>
+          )}
+        </div>
+      )
+    })}
+  </div>
+)
+
+
 export function HoursSection({ config, update }: SectionProps) {
   const { hours } = config
   const set = (patch: Partial<SiteConfig['hours']>) => update({ hours: { ...hours, ...patch } })
@@ -219,69 +373,15 @@ export function HoursSection({ config, update }: SectionProps) {
     })
   }
 
-  /** The same seven-row time editor, used for core and for extended access. */
-  const dayRows = (
-    source: typeof hours.days,
-    onChange: (day: string, patch: Record<string, unknown>) => void,
-    openLabel = 'Open',
-  ) => (
-    <div className="grid gap-2">
-      {WEEKDAYS.map((weekday) => {
-        const day = source.find((d) => d.day === weekday)
-        if (!day) return null
-
-        return (
-          <div
-            key={weekday}
-            className="flex flex-wrap items-center gap-3 rounded-lg border border-zinc-200 px-3 py-2.5"
-          >
-            <span className="w-24 shrink-0 text-sm font-semibold">
-              {WEEKDAY_LABELS[weekday]}
-            </span>
-
-            <label className="flex items-center gap-2 text-[0.85rem]">
-              <input
-                type="checkbox"
-                checked={!day.closed}
-                onChange={(e) => onChange(weekday, { closed: !e.target.checked })}
-                className="h-4 w-4 accent-zinc-900"
-              />
-              {openLabel}
-            </label>
-
-            {!day.closed && (
-              <>
-                <label className="flex items-center gap-1.5 text-[0.85rem]">
-                  <span className="text-zinc-500">from</span>
-                  <input
-                    type="time"
-                    value={day.open}
-                    onChange={(e) => onChange(weekday, { open: e.target.value })}
-                    className="min-h-10 rounded-lg border border-zinc-300 px-2 py-1 text-[0.85rem]"
-                  />
-                </label>
-                <label className="flex items-center gap-1.5 text-[0.85rem]">
-                  <span className="text-zinc-500">to</span>
-                  <input
-                    type="time"
-                    value={day.close}
-                    onChange={(e) => onChange(weekday, { close: e.target.value })}
-                    className="min-h-10 rounded-lg border border-zinc-300 px-2 py-1 text-[0.85rem]"
-                  />
-                </label>
-              </>
-            )}
-          </div>
-        )
-      })}
-    </div>
-  )
-
   return (
     <div className="grid gap-8">
       <Fieldset
         legend="Opening hours"
-        description="Days with the same hours are grouped together automatically on the website."
+        description={
+          config.practice.sites.length
+            ? 'These are your main surgery\'s hours. Each branch surgery\'s hours are set in Practice details, under Other sites. Days with the same hours are grouped together automatically on the website.'
+            : 'Days with the same hours are grouped together automatically on the website.'
+        }
       >
         {dayRows(hours.days, setDay)}
 

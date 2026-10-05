@@ -38,6 +38,34 @@ export interface Closure {
   to?: string
 }
 
+/**
+ * A branch surgery: another building the same practice works from.
+ *
+ * Plenty of practices have two or three, often in neighbouring villages, and
+ * patients need to know which one they are going to: its address, how to get
+ * there, and when it is open, because branches often keep shorter hours than
+ * the main surgery. The main surgery stays in the `practice` fields themselves,
+ * so a practice with one site never sees any of this.
+ */
+export interface PracticeSite {
+  id: string
+  /** What patients call it, e.g. "Gotham" or "Gotham branch surgery". */
+  name: string
+  addressLine1: string
+  addressLine2: string
+  town: string
+  county: string
+  postcode: string
+  /** Blank when patients use the main number for this site too. */
+  phone: string
+  /** True when the site keeps the main surgery's opening hours. */
+  sameHours: boolean
+  /** Its own week, used only when `sameHours` is false. */
+  days: OpeningDay[]
+  /** Anything specific to this site: parking, access, a dispensary. */
+  notes: string
+}
+
 export interface Notice {
   enabled: boolean
   level: NoticeLevel
@@ -176,6 +204,13 @@ export interface SiteConfig {
     boundaryPostcodes: string
     /** An image or a Google Maps embed showing the catchment area. */
     boundaryMapUrl: string
+    /**
+     * What the main surgery is called, when there is more than one, e.g.
+     * "Kegworth". Blank shows "Main surgery". Unused with a single site.
+     */
+    mainSiteName: string
+    /** Branch surgeries, in the order patients should see them. */
+    sites: PracticeSite[]
   }
 
   hours: {

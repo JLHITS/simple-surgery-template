@@ -8,6 +8,24 @@ Anything you have to do yourself is listed under **Action needed**.
 
 ## Unreleased
 
+- **New colour schemes.** Choose one in **Advanced settings**, where each is shown as a
+  small preview. Only the colours change: your pages stay laid out exactly as they are.
+  - **NHS with rainbow:** our usual look, with a thin rainbow in NHS colours across the top
+    of the header, under each page title, under the page you are on in the menu, and along
+    the footer.
+  - **Nightingale:** a solid NHS Blue header and menu with the NHS logo in white, and green
+    buttons, like NHS.UK and the Nightingale theme many NHS WordPress sites use.
+  - **Nightingale with rainbow:** the blue header with the same thin rainbow.
+  - **NHS purple and pink:** NHS Purple buttons and links, with Dark Pink and NHS Pink details.
+- **Every scheme follows NHS England's colour guidance.** Your pages stay white and the NHS
+  logo stays in NHS Blue, and the brighter colours are used only as small details, never as
+  large blocks, as the guidance asks. Every scheme's text is easy to read.
+- **Choosing your own colour still works.** If you chose your own colour before, your website
+  looks exactly as it did, and **Your own colour** is now one of the schemes.
+- **The page you are on is marked in the phone menu**, with a short bar under its name.
+
+Nothing needs doing. Your website keeps its current colours until you choose a new scheme.
+
 ## 1.4.0 - 2026-10-05
 
 - **More than one surgery.** If you see patients at a branch surgery as well, add it in

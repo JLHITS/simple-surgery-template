@@ -17,6 +17,15 @@ export type Weekday =
 
 export type NoticeLevel = 'info' | 'warning' | 'urgent'
 
+/** The colour schemes in lib/theme.ts. */
+export type ThemeKey =
+  | 'nhs'
+  | 'nhs-rainbow'
+  | 'nightingale'
+  | 'nightingale-rainbow'
+  | 'nhs-purple'
+  | 'custom'
+
 export interface OpeningDay {
   day: Weekday
   closed: boolean
@@ -398,7 +407,11 @@ export interface SiteConfig {
 
   /** Advanced settings. Practices should rarely need to touch these. */
   advanced: {
-    /** Accent colour. Defaults to NHS Blue. */
+    /**
+     * The colour scheme. See lib/theme.ts. 'custom' uses `accentColour`.
+     */
+    theme: ThemeKey
+    /** Accent colour for the 'custom' scheme. Defaults to NHS Blue. */
     accentColour: string
     /** 'nhs' locks brand colours, 'custom' honours accentColour everywhere. */
     colourMode: 'nhs' | 'custom'

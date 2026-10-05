@@ -3,6 +3,7 @@ import { getSiteConfig } from '@/lib/config'
 import { practiceDescription, practiceName, practiceStrapline, practiceTitle } from '@/lib/practice'
 import { siteBase } from '@/lib/routing'
 import { getTenant, singleTenantSlug } from '@/lib/tenant'
+import { paletteFor, themeInfo, themeOf, themeStyle } from '@/lib/theme'
 
 interface Props {
   children: React.ReactNode
@@ -52,27 +53,24 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 /**
  * Practice-level theming.
  *
- * The accent colour and corner style are applied to a wrapper element rather
+ * The colour scheme and corner style are applied to a wrapper element rather
  * than to `:root`, because only the root layout may render `<html>` and the
  * root layout does not know which practice this is. CSS custom properties
- * cascade, so a wrapper does the job exactly as well.
+ * cascade, so a wrapper does the job exactly as well. The schemes themselves
+ * are in lib/theme.ts.
  */
 export default async function SiteShell({ children, params }: Props) {
   const { site } = await params
   const { advanced } = await getSiteConfig(site)
 
-  const accent = advanced.colourMode === 'custom' ? advanced.accentColour : '#005EB8'
-  const accentDark = advanced.colourMode === 'custom' ? shade(accent) : '#003087'
+  const theme = themeOf(advanced)
 
   return (
     <div
       data-radius={advanced.cornerRadius}
-      style={
-        {
-          '--accent': sanitiseColour(accent),
-          '--accent-dark': sanitiseColour(accentDark),
-        } as React.CSSProperties
-      }
+      data-theme={theme}
+      data-header={themeInfo(theme).header}
+      style={themeStyle(paletteFor(theme, advanced.accentColour)) as React.CSSProperties}
     >
       {advanced.analyticsScriptUrl && (
         <script
@@ -84,18 +82,4 @@ export default async function SiteShell({ children, params }: Props) {
       {children}
     </div>
   )
-}
-
-/** Only ever emit a value we are certain is a colour. */
-function sanitiseColour(value: string): string {
-  return /^#[0-9a-f]{6}$/i.test(value.trim()) ? value.trim() : '#005EB8'
-}
-
-/** Rough darker variant for hover and focus states on a custom accent. */
-function shade(hex: string): string {
-  const clean = sanitiseColour(hex).replace('#', '')
-  const channels = [0, 2, 4].map((i) =>
-    Math.max(0, Math.round(parseInt(clean.slice(i, i + 2), 16) * 0.72)),
-  )
-  return `#${channels.map((c) => c.toString(16).padStart(2, '0')).join('')}`
 }

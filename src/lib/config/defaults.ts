@@ -1032,6 +1032,7 @@ Tell us who cares for you. With your permission we can share information with th
   },
 
   advanced: {
+    theme: 'nhs',
     accentColour: '#005EB8',
     colourMode: 'nhs',
     cornerRadius: 'soft',

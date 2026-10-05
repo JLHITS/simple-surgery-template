@@ -10,6 +10,7 @@ import type {
   ServiceItem,
   SiteConfig,
   TeamMember,
+  ThemeKey,
   Weekday,
 } from './types'
 
@@ -416,6 +417,15 @@ export function sanitiseConfig(input: unknown, fallback: SiteConfig): SiteConfig
   const compliance = obj(source.compliance)
   const advanced = obj(source.advanced)
 
+  // The scheme decides colourMode, which older saved sites still carry. A
+  // site saved before schemes existed has only colourMode, so its choice of
+  // its own colour carries over.
+  const theme = oneOf<ThemeKey>(
+    advanced.theme,
+    ['nhs', 'nhs-rainbow', 'nightingale', 'nightingale-rainbow', 'nhs-purple', 'custom'],
+    advanced.colourMode === 'custom' ? 'custom' : 'nhs',
+  )
+
   const name = str(practice.name, fallback.practice.name)
   if (!name.trim()) throw new Error('The practice name cannot be empty.')
 
@@ -594,8 +604,9 @@ export function sanitiseConfig(input: unknown, fallback: SiteConfig): SiteConfig
     },
 
     advanced: {
+      theme,
       accentColour: hexColour(advanced.accentColour, '#005EB8'),
-      colourMode: oneOf(advanced.colourMode, ['nhs', 'custom'] as const, 'nhs'),
+      colourMode: theme === 'custom' ? 'custom' : 'nhs',
       cornerRadius: oneOf(advanced.cornerRadius, ['square', 'soft', 'round'] as const, 'soft'),
       showNhsLogo: bool(advanced.showNhsLogo, true),
       showHoursTimeline: bool(advanced.showHoursTimeline, true),

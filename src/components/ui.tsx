@@ -53,7 +53,7 @@ const BUTTON_BASE =
   'inline-flex items-center justify-center gap-2 radius-card px-5 py-3 text-base font-bold no-underline transition-colors duration-150 min-h-11'
 
 const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
-  primary: 'accent-bg text-white hover:brightness-90',
+  primary: 'ss-button',
   secondary:
     'bg-white text-nhs-black border-2 border-nhs-grey-4 hover:border-nhs-black hover:bg-nhs-grey-5',
   quiet: 'bg-transparent accent-text underline underline-offset-4 px-0 py-1 hover:brightness-75',
@@ -260,6 +260,8 @@ export function PageHeader({
           </nav>
         )}
         <h1>{title}</h1>
+        {/* Shown only in the schemes with title bars, such as the rainbow. */}
+        <span className="ss-title-bar" aria-hidden="true" />
         {intro && <p className="mt-3 max-w-2xl text-lg text-nhs-grey-1">{intro}</p>}
       </div>
     </div>

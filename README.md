@@ -179,6 +179,31 @@ for anyone who prefers it. See `src/components/admin/RichText.tsx`.
 The renderer in `src/lib/markdown.tsx` emits React elements and never raw HTML, so there is no
 route from the admin panel to script injection on a patient-facing page.
 
+### Colour schemes
+
+**Advanced settings** offers six colour schemes, each shown as a small preview:
+
+| Scheme | What changes |
+|---|---|
+| NHS (default) | White header, NHS Blue buttons, links and details |
+| NHS with rainbow | The default, with a thin rainbow on the header, under page titles, under the current page in the menu and along the footer |
+| Nightingale | A solid NHS Blue header and menu with the NHS logo reversed out in white, and NHS.UK's green buttons, as NHS.UK and the Nightingale WordPress theme look |
+| Nightingale with rainbow | Both of the above |
+| NHS purple and pink | NHS Purple buttons and links, with Dark Pink and NHS Pink details |
+| Your own colour | Buttons, links and details in a colour the practice chooses |
+
+Only colours change; layout, type and spacing are the same in every scheme. Each is built from
+NHS England's [identity colour palette](https://www.england.nhs.uk/nhsidentity/identity-guidelines/colours/)
+and follows its rules where a website can: NHS Blue and white stay dominant, highlight colours
+are used as thin details rather than large blocks, and the NHS logo is only reversed out of
+solid NHS Blue, so the blue header is exactly #005EB8 and cannot take a custom colour. The
+rainbow uses only palette colours, as hard stripes. NHS.UK's button green (#007F3B) is used in
+place of the palette's NHS Green, which is too light for white text. Every text and background
+pairing passes WCAG AA, which `tests/theme.test.ts` checks.
+
+The schemes are defined once, in `src/lib/theme.ts`, which the site layout turns into CSS
+custom properties and the admin panel's previews draw from.
+
 ### Migration: reading your old website
 
 Moving from another supplier is mostly retyping, so the admin panel has a **Migration** section

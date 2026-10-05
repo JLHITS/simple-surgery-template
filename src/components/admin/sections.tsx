@@ -17,6 +17,8 @@ import {
   Toggle,
 } from './fields'
 import { LogoUpload } from './LogoUpload'
+import { ThemePicker } from './ThemePicker'
+import { themeOf } from '@/lib/theme'
 import { useDemoMode } from './DemoMode'
 
 export interface SectionProps {
@@ -1495,17 +1497,13 @@ export function AdvancedSection({
       </p>
 
       <Fieldset legend="Appearance">
-        <Select
-          label="Colours"
-          hint="NHS Blue is strongly recommended. Patients use NHS colours to tell a real NHS service from a private one."
-          value={advanced.colourMode}
-          options={[
-            { value: 'nhs', label: 'NHS Blue (recommended)' },
-            { value: 'custom', label: 'Use my own colour' },
-          ]}
-          onChange={(colourMode) => set({ colourMode })}
+        <ThemePicker
+          value={themeOf(advanced)}
+          colour={advanced.accentColour}
+          // colourMode follows the scheme, for sites and code that predate schemes.
+          onChange={(theme) => set({ theme, colourMode: theme === 'custom' ? 'custom' : 'nhs' })}
         />
-        {advanced.colourMode === 'custom' && (
+        {themeOf(advanced) === 'custom' && (
           <ColourInput
             label="Your colour"
             hint="Must be dark enough for white text to be readable on it. Aim for a contrast ratio of at least 4.5 to 1."

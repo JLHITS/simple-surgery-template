@@ -18,6 +18,12 @@ interface HeaderProps {
   showNhsLogo: boolean
   /** Practice URL prefix, or the empty string in single tenant mode. */
   base: string
+  /**
+   * True when the colour scheme makes the header solid NHS Blue. The NHS
+   * logo is then reversed out in white, which the identity guidelines allow
+   * only on 100% NHS Blue.
+   */
+  blueHeader?: boolean
 }
 
 export function Header({
@@ -29,6 +35,7 @@ export function Header({
   showSearch,
   showNhsLogo,
   base,
+  blueHeader = false,
 }: HeaderProps) {
   const pathname = usePathname()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -52,7 +59,9 @@ export function Header({
   }, [menuOpen])
 
   return (
-    <header className="border-b border-nhs-grey-4 bg-white">
+    <header className="ss-header">
+      {/* A thin stripe in the schemes that have one, such as the rainbow. */}
+      <div className="ss-header-stripe" aria-hidden="true" />
       {/*
        * When enabled, the NHS logo sits in the top strip beside the practice
        * name. Patients use it to confirm they are on a real NHS service rather
@@ -69,8 +78,8 @@ export function Header({
           >
             {showNhsLogo && (
               <>
-                <NhsLogo height={26} title="NHS" />
-                <span className="h-8 w-px shrink-0 bg-nhs-grey-4" aria-hidden="true" />
+                <NhsLogo height={26} title="NHS" variant={blueHeader ? 'reverse' : 'default'} />
+                <span className="ss-header-divider h-8 w-px shrink-0" aria-hidden="true" />
               </>
             )}
             {logoUrl ? (
@@ -78,10 +87,15 @@ export function Header({
               <img
                 src={logoUrl}
                 alt={logoAlt || practiceName}
-                className="h-9 w-auto max-w-[13rem] object-contain sm:h-10"
+                // A practice's logo is usually dark artwork on a transparent
+                // background, and would disappear on a blue header, so it
+                // sits on a white plate there.
+                className={`h-9 w-auto max-w-[13rem] object-contain sm:h-10 ${
+                  blueHeader ? 'rounded bg-white px-2 py-1' : ''
+                }`}
               />
             ) : (
-              <span className="truncate text-base font-bold leading-tight text-nhs-black sm:text-lg">
+              <span className="ss-header-text truncate text-base font-bold leading-tight sm:text-lg">
                 {practiceName}
               </span>
             )}
@@ -91,9 +105,9 @@ export function Header({
             {phone && (
               <a
                 href={`tel:${phone.replace(/\s+/g, '')}`}
-                className="hidden items-center gap-2 radius-card px-3 py-2 text-sm font-bold text-nhs-black no-underline hover:bg-nhs-grey-5 sm:inline-flex"
+                className="ss-header-link hidden items-center gap-2 radius-card px-3 py-2 text-sm font-bold no-underline sm:inline-flex"
               >
-                <Icon name="phone" size={18} className="accent-text" />
+                <Icon name="phone" size={18} className="ss-header-icon" />
                 {phone}
               </a>
             )}
@@ -109,7 +123,7 @@ export function Header({
             {requestUrl && (
               <a
                 href={requestUrl}
-                className="hidden min-h-11 items-center gap-2 radius-card accent-bg px-3 py-2 text-sm font-bold text-white no-underline hover:opacity-90 lg:inline-flex"
+                className="ss-header-cta hidden min-h-11 items-center gap-2 radius-card px-3 py-2 text-sm font-bold no-underline lg:inline-flex"
               >
                 <Icon name="message" size={18} />
                 Contact us online
@@ -122,7 +136,7 @@ export function Header({
                 onClick={() => setSearchOpen((v) => !v)}
                 aria-expanded={searchOpen}
                 aria-controls="site-search"
-                className="inline-flex min-h-11 items-center gap-2 radius-card border border-nhs-grey-4 px-3 py-2 text-sm font-bold text-nhs-black hover:bg-nhs-grey-5"
+                className="ss-header-control inline-flex min-h-11 items-center gap-2 radius-card px-3 py-2 text-sm font-bold"
               >
                 <Icon name="search" size={18} />
                 {/* NHS guidance: the word "search" must be visible, not just an icon. */}
@@ -135,7 +149,7 @@ export function Header({
               onClick={() => setMenuOpen((v) => !v)}
               aria-expanded={menuOpen}
               aria-controls="main-menu"
-              className="inline-flex min-h-11 items-center gap-2 radius-card border border-nhs-grey-4 px-3 py-2 text-sm font-bold text-nhs-black hover:bg-nhs-grey-5 lg:hidden"
+              className="ss-header-control inline-flex min-h-11 items-center gap-2 radius-card px-3 py-2 text-sm font-bold lg:hidden"
             >
               {/* Text label, not a hamburger icon, as NHS research recommends. */}
               <span>{menuOpen ? 'Close' : 'Menu'}</span>
@@ -145,7 +159,7 @@ export function Header({
       </div>
 
       {showSearch && searchOpen && (
-        <div className="border-t border-nhs-grey-4 bg-nhs-grey-5">
+        <div className="border-t border-nhs-grey-4 bg-nhs-grey-5 text-nhs-black">
           <div className="ss-container py-4">
             <form action={`${base}/search`} method="get" role="search" id="site-search">
               <label htmlFor="q" className="mb-2 block text-sm font-bold">
@@ -162,7 +176,7 @@ export function Header({
                 />
                 <button
                   type="submit"
-                  className="min-h-12 shrink-0 radius-card accent-bg px-5 font-bold text-white"
+                  className="ss-button min-h-12 shrink-0 radius-card px-5 font-bold"
                 >
                   Search
                 </button>
@@ -176,15 +190,15 @@ export function Header({
         id="main-menu"
         aria-label="Main menu"
         ref={panelRef}
-        className={`border-t border-nhs-grey-4 lg:block ${menuOpen ? 'block' : 'hidden'}`}
+        className={`ss-nav lg:block ${menuOpen ? 'block' : 'hidden'}`}
       >
         <div className="ss-container">
           <ul className="flex flex-col lg:flex-row lg:gap-1">
             {requestUrl && (
-              <li className="border-b border-nhs-grey-4 py-3 lg:hidden">
+              <li className="ss-nav-item py-3 lg:hidden">
                 <a
                   href={requestUrl}
-                  className="flex min-h-12 items-center justify-center gap-2 radius-card accent-bg px-4 py-3 text-base font-bold text-white no-underline"
+                  className="ss-header-cta flex min-h-12 items-center justify-center gap-2 radius-card px-4 py-3 text-base font-bold no-underline"
                 >
                   <Icon name="message" size={18} />
                   Contact us online
@@ -194,15 +208,11 @@ export function Header({
             {MAIN_NAV.map((item) => {
               const active = isActive(pathname, base, item)
               return (
-                <li key={item.path} className="border-b border-nhs-grey-4 lg:border-b-0">
+                <li key={item.path} className="ss-nav-item">
                   <Link
                     href={item.path === '/' ? base || '/' : `${base}${item.path}`}
                     aria-current={active ? 'page' : undefined}
-                    className={`flex min-h-12 items-center px-1 py-3 text-base font-semibold no-underline lg:px-4 ${
-                      active
-                        ? 'text-nhs-black lg:border-b-4 lg:border-b-[color:var(--accent)]'
-                        : 'text-nhs-grey-1 hover:text-nhs-black lg:border-b-4 lg:border-b-transparent lg:hover:border-b-nhs-grey-4'
-                    }`}
+                    className="ss-nav-link flex min-h-12 items-center px-1 py-3 text-base font-semibold no-underline lg:px-4"
                   >
                     {item.label}
                   </Link>
@@ -210,12 +220,12 @@ export function Header({
               )
             })}
             {phone && (
-              <li className="border-b border-nhs-grey-4 sm:hidden">
+              <li className="ss-nav-item sm:hidden">
                 <a
                   href={`tel:${phone.replace(/\s+/g, '')}`}
-                  className="flex min-h-12 items-center gap-2 px-1 py-3 text-base font-semibold text-nhs-black no-underline"
+                  className="ss-header-text flex min-h-12 items-center gap-2 px-1 py-3 text-base font-semibold no-underline"
                 >
-                  <Icon name="phone" size={18} className="accent-text" />
+                  <Icon name="phone" size={18} className="ss-header-icon" />
                   Call {phone}
                 </a>
               </li>

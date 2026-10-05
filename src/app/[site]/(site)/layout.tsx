@@ -5,6 +5,7 @@ import { getSiteConfig } from '@/lib/config'
 import { practiceName } from '@/lib/practice'
 import { siteBase } from '@/lib/routing'
 import { getTenant, isServing, singleTenantSlug } from '@/lib/tenant'
+import { themeInfo, themeOf } from '@/lib/theme'
 
 interface Props {
   children: React.ReactNode
@@ -56,6 +57,7 @@ export default async function SiteLayout({ children, params }: Props) {
         showSearch={advanced.showSearch}
         showNhsLogo={advanced.showNhsLogo}
         base={base}
+        blueHeader={themeInfo(themeOf(advanced)).header === 'blue'}
       />
 
       <main id="main-content">{children}</main>

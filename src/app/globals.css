@@ -40,6 +40,37 @@
   --accent-dark: var(--color-nhs-dark-blue);
   --radius: 8px;
 
+  /*
+   * The colour scheme. These are the NHS defaults; each practice's scheme is
+   * set on the element that wraps its site, from lib/theme.ts, which is the
+   * one place the schemes are defined.
+   */
+  --button-bg: var(--accent);
+  --button-bg-hover: var(--accent-dark);
+  --button-shadow: transparent;
+  --link: var(--accent);
+  --link-hover: var(--accent-dark);
+  --header-bg: #ffffff;
+  --header-text: var(--color-nhs-black);
+  --header-icon: var(--accent);
+  --header-border: var(--color-nhs-grey-4);
+  --header-divider: var(--color-nhs-grey-4);
+  --header-control-border: var(--color-nhs-grey-4);
+  --header-hover: var(--color-nhs-grey-5);
+  --header-cta-bg: var(--accent);
+  --header-cta-text: #ffffff;
+  --header-cta-hover: var(--accent-dark);
+  --nav-text: var(--color-nhs-grey-1);
+  --nav-text-active: var(--color-nhs-black);
+  --nav-border: var(--color-nhs-grey-4);
+  --nav-active: var(--accent);
+  --nav-hover: var(--color-nhs-grey-4);
+  --stripe: none;
+  --stripe-height: 0px;
+  --footer-stripe: var(--accent);
+  --title-bar: none;
+  --title-bar-height: 0px;
+
   color-scheme: light;
 }
 
@@ -175,14 +206,127 @@
   }
 
   .ss-link {
-    color: var(--accent);
+    color: var(--link);
     text-decoration: underline;
     text-underline-offset: 0.15em;
     text-decoration-thickness: 1px;
   }
   .ss-link:hover {
-    color: var(--accent-dark);
+    color: var(--link-hover);
     text-decoration-thickness: 2px;
+  }
+
+  /* The main button. NHS.UK style schemes give it a shadow underneath. */
+  .ss-button {
+    background-color: var(--button-bg);
+    color: #ffffff;
+    box-shadow: 0 4px 0 var(--button-shadow);
+  }
+  .ss-button:hover {
+    background-color: var(--button-bg-hover);
+  }
+
+  /*
+   * The header and menu. White in most schemes, solid NHS Blue in the
+   * Nightingale ones, so every colour in them comes from the scheme.
+   */
+  .ss-header {
+    background-color: var(--header-bg);
+    color: var(--header-text);
+    border-bottom: 1px solid var(--header-border);
+  }
+  .ss-header-stripe {
+    height: var(--stripe-height);
+    background: var(--stripe);
+  }
+  .ss-header-divider {
+    background-color: var(--header-divider);
+  }
+  .ss-header-text {
+    color: var(--header-text);
+  }
+  .ss-header-icon {
+    color: var(--header-icon);
+  }
+  .ss-header-link {
+    color: var(--header-text);
+  }
+  .ss-header-link:hover,
+  .ss-header-control:hover {
+    background-color: var(--header-hover);
+  }
+  .ss-header-control {
+    border: 1px solid var(--header-control-border);
+    color: var(--header-text);
+  }
+  .ss-header-cta {
+    background-color: var(--header-cta-bg);
+    color: var(--header-cta-text);
+  }
+  .ss-header-cta:hover {
+    background-color: var(--header-cta-hover);
+  }
+  .ss-nav {
+    border-top: 1px solid var(--nav-border);
+  }
+  .ss-nav-item {
+    border-bottom: 1px solid var(--nav-border);
+  }
+  .ss-nav-link {
+    position: relative;
+    color: var(--nav-text);
+  }
+  .ss-nav-link:hover,
+  .ss-nav-link[aria-current='page'] {
+    color: var(--nav-text-active);
+  }
+  /*
+   * In the phone menu the current page has a short bar under its name. On a
+   * blue header every link is white, so colour alone cannot mark it.
+   */
+  .ss-nav-link[aria-current='page']::after {
+    content: '';
+    position: absolute;
+    left: 0.25rem;
+    bottom: 0.45rem;
+    width: 2.5rem;
+    height: 3px;
+    background: var(--nav-active);
+  }
+  @media (min-width: 64rem) {
+    .ss-nav-item {
+      border-bottom: 0;
+    }
+    /* The bar under the current page: a colour, or a stripe of several. */
+    .ss-nav-link::after {
+      content: '';
+      position: absolute;
+      inset: auto 0 0 0;
+      height: 4px;
+    }
+    .ss-nav-link:hover::after {
+      background: var(--nav-hover);
+    }
+    .ss-nav-link[aria-current='page']::after {
+      inset: auto 0 0 0;
+      width: auto;
+      height: 4px;
+      background: var(--nav-active);
+    }
+  }
+
+  /* A short bar under a page's title, in the schemes that have one. */
+  .ss-title-bar {
+    display: block;
+    width: 4rem;
+    height: var(--title-bar-height);
+    margin-top: calc(var(--title-bar-height) * 3);
+    background: var(--title-bar);
+  }
+
+  .ss-footer-stripe {
+    height: 4px;
+    background: var(--footer-stripe);
   }
 
   /* Blockquote-style callout used by the Markdown renderer. */
@@ -227,12 +371,12 @@
     color: var(--color-nhs-grey-1);
   }
   .ss-prose a {
-    color: var(--accent);
+    color: var(--link);
     text-decoration: underline;
     text-underline-offset: 0.15em;
   }
   .ss-prose a:hover {
-    color: var(--accent-dark);
+    color: var(--link-hover);
     text-decoration-thickness: 2px;
   }
   .ss-prose strong {

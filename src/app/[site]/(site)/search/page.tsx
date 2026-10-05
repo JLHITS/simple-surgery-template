@@ -44,7 +44,7 @@ export default async function SearchPage({ params, searchParams }: Props) {
             />
             <button
               type="submit"
-              className="min-h-12 shrink-0 radius-card accent-bg px-6 font-bold text-white"
+              className="ss-button min-h-12 shrink-0 radius-card px-6 font-bold"
             >
               Search
             </button>

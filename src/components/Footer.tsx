@@ -27,7 +27,9 @@ export function Footer({ config, base }: { config: SiteConfig; base: string }) {
   const several = sites.length > 1
 
   return (
-    <footer className="mt-16 border-t-4 border-[color:var(--accent)] bg-nhs-grey-5">
+    <footer className="mt-16 bg-nhs-grey-5">
+      {/* NHS Blue, or the scheme's own stripe: the rainbow, or purple and pink. */}
+      <div className="ss-footer-stripe" aria-hidden="true" />
       <div className="ss-container py-12">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div>

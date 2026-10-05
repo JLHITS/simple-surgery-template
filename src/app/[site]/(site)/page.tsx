@@ -47,6 +47,7 @@ export default async function HomePage({ params }: Props) {
           {practiceStrapline(practice)}
         </p>
         <h1 className="mt-2 max-w-3xl">{practiceName(practice)}</h1>
+        <span className="ss-title-bar" aria-hidden="true" />
 
         <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2">
           <OpenNow days={hours.days} closures={hours.closures} />
